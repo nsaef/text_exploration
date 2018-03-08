@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Detailansicht</title>
+</head>
+<body>
+    <p>path: {{ document.path }}</p>
+    <p>last modified: {{ document.date }}</p>
+
+    <h1>{{ document.title }}</h1>
+    <div>{{ document.content | linebreaks }}</div>
+</body>
+</html>
+
+
