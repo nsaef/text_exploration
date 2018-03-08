@@ -67,8 +67,3 @@ class Collection(models.Model):
                 self.documents.add(d)
             self.save()
 
-
-
-
-
-

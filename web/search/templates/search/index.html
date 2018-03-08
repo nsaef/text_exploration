@@ -1,22 +1,19 @@
+{% extends "./basic_page.html" %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Home</title>
-</head>
-<body>
+{% block title %} Home {% endblock title %}
+
+{% block content %}
     <h1>Index</h1>
-    <h2>Dokumente zu Sammlung hinzufügen</h2>
+    <h2>Sammlungen:</h2>
     {% if collection_list %}
-        <table style="border:1px solid black">
+        <table class="table">
         <tr><th>Name</th><th>Doks</th><th>Pfad</th></tr>
             {% for c in collection_list %}
                 {% if c.documents.count is 0 %}
                     {{ c.add_docs_to_collection }}
                 {% endif %}
                 <tr>
-                    <td>{{ c.title }}</td>
+                    <td><a href="{% url 'collection_detail' c.id %}">{{ c.title }}</a></td>
                     <td>{{ c.documents.count }}</td>
                     <td>{{ c.path }}</td>
                 </tr>
@@ -27,7 +24,7 @@
         {% endif %}
 
     <h2>Dokumente durchsuchen</h2>
-    <p>Hallo Welt</p>
+    <p>{% lorem %}</p>
     <div>
         <form action="{% url 'search_action' %}" method="get">
             <label for="search">Dokumente durchsuchen:</label>
@@ -40,14 +37,13 @@
         {% if document_list %}
         <ul>
             {% for doc in document_list %}
-                <li><a href="{% url 'detail' doc.id %}">{{ doc.title }}</a></li>
+                <li><a href="{% url 'document_detail' doc.id %}">{{ doc.title }}</a></li>
             {% endfor %}
         </ul>
         {% else %}
             <p>Keine Dokumente verfügbar.</p>
         {% endif %}
     </div>
-</body>
-</html>
 
+{% endblock content %}
 

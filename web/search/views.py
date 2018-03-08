@@ -21,9 +21,13 @@ def index(request):
     }
     return render(request, 'search/index.html', context)
 
-def detail(request, doc_id):
+def document_detail(request, doc_id):
     document = get_object_or_404(Document, pk=doc_id)
-    return render(request, "search/detail.html", {"document": document})
+    return render(request, "search/document_detail.html", {"document": document})
+
+def collection_detail(request, collection_id):
+    collection = get_object_or_404(Collection, pk=collection_id)
+    return render(request, "search/collection_detail.html", {"collection":collection})
 
 def results(request, query_id):
     query = get_object_or_404(Query, pk=query_id)
