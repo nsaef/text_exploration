@@ -57,6 +57,8 @@ class Collection(models.Model):
                 filepath = self.path + "/" + file
                 if os.path.isdir(filepath) is True:
                     continue
+                if self.documents.filter(path=filepath).count() > 0:
+                    continue
                 fileobj = open(filepath, "r", encoding="utf-8")
                 content = fileobj.read()
                 fileobj.close()

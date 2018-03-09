@@ -3,35 +3,25 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.http import Http404
 from .models import Document, Query, Collection
 from django.urls import reverse
+from django.views import generic
 
-def index(request):
-    if request.method == "POST":
-        if request.POST.get("collection_title"):
-            c_title = request.POST.get("collection_title")
-        if request.POST["collection_path"]:
-            c_path = request.POST["collection_path"]
-        if c_title and c_path:
-            c = Collection.objects.create_collection(title=c_title, path=c_path)
-            c.save()
-    document_list = Document.objects.order_by("title")
-    collection_list = Collection.objects.order_by("title")
-    context = {
-        "collection_list": collection_list,
-        "document_list": document_list
-    }
-    return render(request, 'search/index.html', context)
+class IndexView(generic.ListView):
+    template_name = "search/index.html"
+    context_object_name = "collection_list"
 
-def document_detail(request, doc_id):
-    document = get_object_or_404(Document, pk=doc_id)
-    return render(request, "search/document_detail.html", {"document": document})
+    def get_queryset(self):
+        return Collection.objects.order_by("title")
 
-def collection_detail(request, collection_id):
-    collection = get_object_or_404(Collection, pk=collection_id)
-    return render(request, "search/collection_detail.html", {"collection":collection})
+class DocumentDetail(generic.DetailView):
+    model = Document
+    #template_name = "search/document_detail.html"
 
-def results(request, query_id):
-    query = get_object_or_404(Query, pk=query_id)
-    return render(request, "search/results.html", {"query": query})
+class CollectionDetail(generic.DetailView):
+    model = Collection
+
+class ResultsView(generic.DetailView):
+    model = Query
+    template_name = "search/results.html"
 
 def search_action(request):
     query = Query()

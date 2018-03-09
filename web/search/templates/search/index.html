@@ -22,28 +22,5 @@
         {% else %}
             <p>Keine Sammlung verfügbar.</p>
         {% endif %}
-
-    <h2>Dokumente durchsuchen</h2>
-    <p>{% lorem %}</p>
-    <div>
-        <form action="{% url 'search_action' %}" method="get">
-            <label for="search">Dokumente durchsuchen:</label>
-            <input type="search" id="doc_search" name="doc_search">
-            <input type="submit" />
-        </form>
-    </div>
-    <div>
-        <h3>Übersicht</h3>
-        {% if document_list %}
-        <ul>
-            {% for doc in document_list %}
-                <li><a href="{% url 'document_detail' doc.id %}">{{ doc.title }}</a></li>
-            {% endfor %}
-        </ul>
-        {% else %}
-            <p>Keine Dokumente verfügbar.</p>
-        {% endif %}
-    </div>
-
 {% endblock content %}
 
