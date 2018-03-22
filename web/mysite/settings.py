@@ -31,7 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'search.apps.SearchConfig',
+    'CollectionExplorer.apps.SearchConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -121,5 +121,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    "/CollectionExplorer/static",
+    "/CollectionExplorer/static/corpora",
+    "/CollectionExplorer/static/index",
+]
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 20000

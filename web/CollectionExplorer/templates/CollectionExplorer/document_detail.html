@@ -1,5 +1,6 @@
 {% extends "./basic_page.html" %}
 
+{% load document_tags %}
 
 {% block title %}{{ document.title }}- Detailansicht {% endblock title %}
 
@@ -8,6 +9,14 @@
     <p>last modified: {{ document.date }}</p>
 
     <h1>{{ document.title }}</h1>
+
+    <h2>Häufigste Worte im Dokument</h2>
+    {% get_highest_freq_words document.content %}
+
+     <h2>Namen und Orte im Dokument</h2>
+    {% get_named_entities document.content %}
+
+    <h2>Volltext</h2>
     <div>{{ document.content | linebreaks }}</div>
 
 {% endblock content %}

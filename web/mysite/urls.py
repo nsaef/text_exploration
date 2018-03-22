@@ -16,8 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
-app_name="search"
+app_name="CollectionExplorer"
 urlpatterns = [
-    path('search/', include('search.urls')), #, namespace="search"
+    path('explorer/', include('CollectionExplorer.urls')), #, namespace="CollectionExplorer"
     path('admin/', admin.site.urls),
 ]

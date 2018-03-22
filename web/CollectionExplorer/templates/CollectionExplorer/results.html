@@ -1,0 +1,50 @@
+{% extends "./basic_page.html" %}
+
+{% load search_tags %}
+
+{% block title %} Suchergebnisse {% endblock title %}
+
+{% block content %}
+
+    {% ft_search collection query as results %}
+
+    <h1>Suchergebnis</h1>
+    <p>Ergebnisse für die Suche nach "{{ query }}" in der Sammlung {{ collection.title }}</p>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Vorschau</th>
+                <th>Pfad</th>
+                <th>Datum</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doc, preview in results %}
+            <tr>
+                <td><a href="{% url 'document_detail' doc.id %}">{{ doc.title }}</a></td>
+                <td>{{ preview|safe }}</td>
+                <td>{{ doc.path }}</td>
+                <td>{{ doc.date }}</td>
+            </tr>
+            {% empty %}
+                <tr><td>Keine Ergebnisse</td><td></td><td></td><td></td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock content %}
+
+{% block javascript %}
+<script>
+    $(document).ready(function() {
+        var tables = $('table').DataTable({
+            "paging": true,
+            "ordering": false,
+            "info": true,
+            "searching": true
+        });
+        console.log(tables);
+} );
+</script>
+{% endblock javascript %}

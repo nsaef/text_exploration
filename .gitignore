@@ -8,7 +8,9 @@ results/
 ## Django
 #################
 web/search/migrations/
-*.sqlite
+*.sqlite3
+static/
+migrations/
 
 #################
 ## PyCharm

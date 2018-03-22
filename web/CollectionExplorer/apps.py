@@ -1,10 +1,8 @@
 from django.apps import AppConfig
 
 
-
-
 class SearchConfig(AppConfig):
-    name = 'search'
+    name = 'CollectionExplorer'
 
     def ready(self):
-        import search.search_signals
+        import CollectionExplorer.explorer_signals

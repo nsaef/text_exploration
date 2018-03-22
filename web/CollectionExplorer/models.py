@@ -1,6 +1,7 @@
 from django.db import models
 import os, os.path
 import datetime
+import codecs
 
 # Create your models here.
 class Query(models.Model):
@@ -31,24 +32,36 @@ class History(models.Model):
     query = models.ManyToManyField(Query)
 
 
-# class Collection(models.Model):
-#     title = models.CharField(max_length=200)
-#     documents = models.ManyToManyField(Document)
-#
-#     def __str__(self):
-#         return self.title
-#
-#     def create_collection(self, *args, **kwargs):
-#         self.title = kwargs.pop("title", None)
-#         #self.documents = {}
+class Entity(models.Model):
+    name = models.CharField(max_length=500)
+    frequency = models.IntegerField(default=0)
 
-# class: Data_source mit title und path
-# enthält Funktion, die aus data source automatisch eine collection erstellt - ohne path, mit documents
+    PERSON = "person"
+    LOCATION = "location"
+    ORGANIZATION = "organization"
+    OTHER = "other"
+    TYPE_CHOICES = (
+        (PERSON, "Person"),
+        (LOCATION, "Ort"),
+        (ORGANIZATION, "Organisation"),
+        (OTHER, "Weitere")
+    )
+
+    type = models.CharField(max_length=50, choices=TYPE_CHOICES)
+
+    def __str__(self):
+        return str(self.name)
+
+
 class Collection(models.Model):
     title = models.CharField(max_length=200)
     path = models.FilePathField(path=r"D:\Uni\Masterarbeit", recursive=True, allow_files=False, allow_folders=True)
     documents = models.ManyToManyField(Document, blank=True)
-    changes = models.BooleanField()
+    entities = models.ManyToManyField(Entity, blank=True)
+
+
+    def __str__(self):
+        return str(self.title)
 
     def add_docs_to_collection(self):
         if os.path.exists(self.path):
@@ -59,13 +72,11 @@ class Collection(models.Model):
                     continue
                 if self.documents.filter(path=filepath).count() > 0:
                     continue
-                fileobj = open(filepath, "r", encoding="utf-8")
-                content = fileobj.read()
-                fileobj.close()
-                date = datetime.datetime.utcfromtimestamp(os.path.getmtime(filepath))
-                d = Document(title=file, content=content, path=filepath, date=date)
-                d.save()
-                print(d)
-                self.documents.add(d)
+                with codecs.open(filepath, "r", encoding="utf-8") as fileobj:
+                    content = fileobj.read()
+                    date = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
+                    d = Document(title=file, content=content, path=filepath, date=date)
+                    d.save()
+                    self.documents.add(d)
             self.save()
 

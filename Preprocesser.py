@@ -22,7 +22,7 @@ class Preprocesser(object):
         self.stopwords = nltk.corpus.stopwords.words('german')
         self.stopwords.extend(["==", "===", "====", "s.", "dass", "the", "of", "de", "wurde", "**", "ab", "sowie", "etwa", "i."])
 
-    def tokenize(self, corpus, text=False, list=True, remove_stopwords=True):
+    def tokenize(self, corpus, remove_stopwords=True, cs=True):
         # NLTK's default German stopwords
         self.split_sentences(corpus)
 
@@ -38,13 +38,10 @@ class Preprocesser(object):
             for sentence in sent_tokenizer.tokenize(article):
                 for token in nltk.tokenize.word_tokenize(sentence):
                     if token not in string.punctuation and (remove_stopwords is False or token.lower() not in self.stopwords):
-                        #if text == True:
-                            #article_str += token.lower() + " "
-                        #if list == True:
-                        article_list += [token] #.lower()
-            #if text == True:
-                #self.corpus_cleaned_string.append(article_str)
-            #if list == True:
+                        if cs is True:
+                            article_list += [token]
+                        else:
+                            article_list += [token.lower()]
             self.corpus_tokenized.append(article_list)
         print("done in %0.3fs" % (time() - t0))
         return
@@ -56,6 +53,7 @@ class Preprocesser(object):
         tokenizer = nltk.data.load("tokenizers/punkt/german.pickle")
 
         for doc in corpus:
+            test = "test"
             self.corpus_sentences.append(tokenizer.tokenize(doc)) #nltk.tokenizer.tag_sents(doc)
         print("done in %0.3fs" % (time() - t0))
         return

@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     ##### Instantiate the search engine and index all files #####
     # search = SearchEngine()
-    #search.search("Köln AND Universität OR Fachhochschule")
+    # search.search("Köln AND Universität OR Fachhochschule")
 
 
     #### Create a test corpus from the wikipedia dump and save it to disk #####
@@ -36,9 +36,9 @@ if __name__ == '__main__':
     # preprocesser = Preprocesser()
     # preprocesser.tokenize(corpus, remove_stopwords=False)
     # corpus_tokenized = preprocesser.corpus_tokenized
-    #pickle.dump(corpus_tokenized, open('resources/corpus_300k_filtered_tokenized_with_stopwords_cs.c', 'wb'))
-    #save_file(corpus_tokenized, "corpus_300k_filtered_tokenized_with_stopwords_cs")
-    #save_file(corpus_tokenized, "corpus_10k_test")
+    # pickle.dump(corpus_tokenized, open('resources/corpus_300k_filtered_tokenized_with_stopwords_cs.c', 'wb'))
+    # save_file(corpus_tokenized, "corpus_300k_filtered_tokenized_with_stopwords_cs")
+    # save_file(corpus_tokenized, "corpus_10k_test")
 
     corpus_tokenized = pickle.load(open("resources/corpus_10k_filtered_tokenized_with_stopwords_cs.c", "rb"))
 

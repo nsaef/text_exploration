@@ -9,8 +9,8 @@ import datetime
 
 
 class SearchEngine(object):
-    def __init__(self):
-        self.index_dir = "D:/Uni/Masterarbeit/index"
+    def __init__(self, collection_path, index_path, collection_id):
+        self.index_dir = index_path + str(collection_id)
         self.schema = Schema(title=TEXT(stored=True), path=ID(stored=True), content=TEXT(stored=True), date=DATETIME(stored=True))
         self.ix = None
         if not os.path.exists(self.index_dir):
@@ -21,21 +21,22 @@ class SearchEngine(object):
             self.ix = index.open_dir(self.index_dir)
             self.writer = self.ix.writer()
         else:
-            self.build_index(u"D:/Uni/Masterarbeit/Beispieldaten/Wiki_partial_corpus")
+            self.build_index(collection_path)
         self.searcher = self.ix.searcher()
         return
 
-    def search(self, query):
+    def search(self, query, limit=None):
         parser = QueryParser("content", self.ix.schema)
         parser.add_plugin(qparser.FuzzyTermPlugin())
         myquery = parser.parse(query)
-        results = self.searcher.search(myquery)
-        print(len(results), " results in total")
-        #print(results[0:results.scored_length()])
-        for hit in results[0:results.scored_length()]:
-            print(hit["title"])
-            # Assume "content" field is stored
-            print(hit.highlights("content"))
+        results = self.searcher.search(myquery, limit=limit)
+        # print(len(results), " results in total")
+        # #print(results[0:results.scored_length()])
+        # for hit in results[0:results.scored_length()]:
+        #     print(hit["title"])
+        #     # Assume "content" field is stored
+        #     print(hit.highlights("content"))
+        return results
 
     def build_index(self, file_dir):
         print("Creating a new index...")

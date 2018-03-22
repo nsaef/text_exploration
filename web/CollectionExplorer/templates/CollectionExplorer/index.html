@@ -1,0 +1,48 @@
+{% extends "./basic_page.html" %}
+
+{% block title %} Home {% endblock title %}
+
+{% block content %}
+    <h1>Index</h1>
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Sammlungen:</h2>
+            {% if collection_list %}
+                <table class="table">
+                    <tr>
+                        <th>Name</th>
+                        <th>Doks</th>
+                        <th>Pfad</th>
+                    </tr>
+                    {% for c in collection_list %}
+                        <tr>
+                            <td><a href="{% url 'collection_detail' c.id %}">{{ c.title }}</a></td>
+                            <td>{{ c.documents.count }}</td>
+                            <td>{{ c.path }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% else %}
+                <p>Keine Sammlung verfügbar.</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <button onclick="$('#add_collection').toggle();">Neue Sammlung anlegen</button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <form style="display:none" action="{% url 'add_collection' %}" method="post">
+                {% csrf_token %}
+                <p><label for="col_title">Name</label>
+                <input name="col_title" id="col_title" type="text"></p>
+                <p><label for="col_path">Pfad</label>
+                <input name="col_path" id="col_path" type="text"></p>
+                <input type="submit" value="Sammlung erstellen">
+            </form>
+        </div>
+    </div>
+{% endblock content %}
+
