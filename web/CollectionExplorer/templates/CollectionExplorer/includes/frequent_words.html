@@ -1,0 +1,9 @@
+<p>
+    {% for word, count in freq_words.items %}
+        <span class="searchable">{{ word }}</span>: {{ count }}
+        {% comment %}<a href="{%  url "results" %}?col=14&query=test">{{ word }}</a>: {{ count }}{% endcomment %}
+        {% if not forloop.last %}
+            ,
+        {% endif %}
+    {% endfor %}
+</p>

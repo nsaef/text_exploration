@@ -1,0 +1,27 @@
+{% extends "./basic_page.html" %}
+
+{% block title %} Dokumente zur Sammlung hinzufügen {% endblock title %}
+
+{% block content %}
+    <h1>Dokumente hochladen</h1>
+    <p>Hier können neue Dokumente in Form einer Zip-Datei der Sammlung hinzugefügt werden. Der Upload-Vorgang nimmt besonders bei einer hohen Zahl von Dokumenten viel Zeit in Anspruch. Nach Abschluss des Uploads werden Sie zur Sammlung weitergeleitet. Die maximal zulässige Dateigröße beträgt ??? MB. Es können die Formate ??????? verarbeitet werden.</p>
+
+    <form action="#" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ upload_form }}
+    <input class="btn btn-info" type="submit" value="Hochladen">
+    </form>
+
+{% endblock content %}
+
+{% block javascript %}
+    <script>
+        $("<br/>").insertBefore("label");
+
+        $("#id_remote").change(function() {
+            $("remote_path").prop('disabled', function(i, v) { return !v; });
+        });
+
+    </script>
+
+{% endblock javascript %}

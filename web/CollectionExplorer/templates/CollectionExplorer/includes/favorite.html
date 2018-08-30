@@ -1,0 +1,31 @@
+<div id="fav_{{ doc.id }}" onclick="toggleFavorite({{ doc.id }})">
+    {% if doc.interesting is True %}
+        <i class="material-icons favorite">favorite</i>
+    {% else %}
+        <i class="material-icons favorite">favorite_border</i>
+    {% endif %}
+</div>
+
+
+<script>
+    function toggleFavorite(doc_id) {
+    var csrftoken = Cookies.get('csrftoken');
+
+     $.ajax({
+         type: "POST",
+         url: "{% url 'index' %}edit_favorite/" + doc_id,
+         headers: {'X-CSRFToken': csrftoken},
+         data: doc_id,
+         success: function(data){
+             console.log("success! new status: " + data);
+             var icon = $("#fav_" + doc_id + " i.favorite");
+             console.log(icon);
+             if (data === "True") {
+                 icon.text("favorite");
+             } else {
+                 icon.text("favorite_border");
+             }
+        }
+     });
+}
+</script>

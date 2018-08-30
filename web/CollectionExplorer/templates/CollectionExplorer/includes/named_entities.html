@@ -1,0 +1,26 @@
+<div class="row">
+    {% regroup obj.most_frequent_entities by get_type_display as entities %}
+    {% for type, entity_list in entities %}
+        <div class="col-md-5">
+        <h3>{{ type }}</h3>
+        <table class="table table-striped named_entities">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Anzahl</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for entity in entity_list %}
+                <tr>
+                    <td><span class="searchable">{{ entity.name }}</span></td>
+                    <td>{{ entity.frequency }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    {% empty %}
+        <p>Keine Entitäten des Typs {{ type }} erkannt.</p>
+    {% endfor %}
+</div>
