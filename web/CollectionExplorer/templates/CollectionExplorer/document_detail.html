@@ -1,22 +1,187 @@
 {% extends "./basic_page.html" %}
-
+{% load basic_tags %}
 {% load document_tags %}
 
 {% block title %}{{ document.title }}- Detailansicht {% endblock title %}
 
 {% block content %}
+    <div id="favorite_box" class="float-right">{% include "./includes/favorite.html" with doc=document %}</div>
+
     <p>path: {{ document.path }}</p>
     <p>last modified: {{ document.date }}</p>
 
     <h1>{{ document.title }}</h1>
+    gehört zu collection {{ collection.title }}
 
-    <h2>Häufigste Worte im Dokument</h2>
-    {% get_highest_freq_words document.content %}
+    <h2>Notizen</h2>
+    <form id="note_form" action="{% url 'index' %}save_note/{{ document.id }}" method="post">
+        {% csrf_token %}
+        {{ note_form }}
+        <br/>
+        <input class="btn btn-info" type="submit" value="Speichern">
+    </form>
 
-     <h2>Namen und Orte im Dokument</h2>
-    {% get_named_entities document.content %}
+    <h2>Häufigste Worte</h2>
+    {% get_highest_freq_words document 150 as freq_words%}
+    {% include "./includes/word_cloud.html" with data=freq_words %}
+    <button class="btn btn-info" onclick="$('#freq_list').toggle();">Liste anzeigen</button>
+    <div id="freq_list" style="display: none">
+    {% include "./includes/frequent_words.html" with freq_words=freq_words %}
+    </div>
+
+     <h2>Namen und Orte</h2>
+    {% if document.entities.all|length == 0 %}
+        {% get_named_entities document %}
+    {% endif %}
+    {% include "./includes/named_entities.html" with obj=document %}
+
+
+
+    <h2>Duplikate</h2>
+    <table class="table table-striped" id="duplicate_table">
+    <thead>
+        <tr>
+            <th>Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        {%  for doc in document.duplicates.all %}
+            <tr>
+                <td><a href="{% url 'document_detail' collection.id doc.id %}">{{ doc.title }}</a></td>
+            </tr>
+        {% empty %}
+            <td>Keine Duplikate gefunden.</td>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+    <h2>Mögliche Versionen</h2>
+    <table class="table table-striped" id="version_table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Vorschau</th>
+            <th>Ähnlichkeit</th>
+            <th>Ähnlichkeitsmaß</th>
+        </tr>
+    </thead>
+    <tbody>
+        {%  for version in versions_minhash %}
+            <tr>
+                <td><a href="{% url 'document_detail' collection.id  version.candidate.id %}">{{ version.candidate.title }}</a></td>
+                <td>{{ version.candidate.content|truncatewords:50 }}</td>
+                <td>{{ version.similarity_score }}</td>
+                <td>{{ version.similarity_measure }}</td>
+            </tr>
+        {% empty %}
+            <td>Keine Versions-Kandidaten gefunden.</td>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+{% comment %}    {% retrieve_version_candidates document as candidates %}
+    <h2>Mögliche Versionen - weitere Kandidaten</h2>
+    <ul>
+    {% for id, data in candidates.items %}
+        <li><a href="{% url 'document_detail' collection.id id %}">{{ data.0.title }}, {{ data.1 }} Ähnlichkeit</a></li>
+    {% empty %}
+        <li>Keine Versions-Kandidaten gefunden.</li>
+    {% endfor %}
+    </ul>{% endcomment %}
+
+
+
+    <h2>Ähnliche Dokumente</h2>
+    {% if not versions_word2vec %}
+        {% get_similar_docs document as versions_word2vec %}
+    {% endif %}
+
+    <table class="table table-striped" id="sim_docs">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Vorschau</th>
+                <th>Ähnlichkeit</th>
+                <th>Ähnlichkeitsmaß</th>
+            </tr>
+        </thead>
+        <tbody>
+    {% for version in versions_word2vec %}
+        <tr>
+            <td><a href="{% url 'document_detail' collection.id version.candidate.id %}">{{ version.candidate.title }}</a></td>
+            <td>{{ version.candidate.content|truncatewords:50 }}</td>
+            <td>{{ version.similarity_score }}</td>
+            <td>{{ version.similarity_measure }}</td>
+        </tr>
+    {% empty %}
+        <td>-</td>
+            <td>Keine Ergebnisse</td>
+            <td>-</td>
+            <td>-</td>
+    {% endfor %}
+        </tbody>
+    </table>
 
     <h2>Volltext</h2>
-    <div>{{ document.content | linebreaks }}</div>
+{#    <div>{{ document.content | linebreaks }}</div>#}
 
 {% endblock content %}
+
+{% block javascript %}
+<script>
+    $(document).ready(function() {
+        var table_sim = $('table#sim_docs').DataTable({
+            "paging": true,
+            "ordering": true,
+            "info": true,
+            "searching": true,
+            "order": [[2, "desc"]]
+        });
+
+        var table_version = $('table#version_table').DataTable({
+            "paging": true,
+            "ordering": true,
+            "info": true,
+            "searching": true,
+            "order": [[2, "desc"]]
+        });
+
+         var table_duplicates = $('table#duplicate_table').DataTable({
+            "paging": true,
+            "ordering": true,
+            "info": true,
+            "searching": true,
+             "pageLength": 5
+        });
+
+        var table_ne = $('table.named_entities').DataTable({
+            "paging": true,
+            "ordering": true,
+            "info": true,
+            "searching": true,
+            "order": [[1, "desc"]]
+        });
+
+        var note_form = $("#note_form");
+        var text = $("#note_form textarea");
+        text.val("{{ document.note }}");
+
+        note_form.submit(function (event) {
+            event.preventDefault();
+            var csrftoken = Cookies.get('csrftoken');
+
+            $.ajax({
+                 type: "POST",
+                 url: "{% url 'index' %}save_note/{{ document.id }}",
+                 headers: {'X-CSRFToken': csrftoken},
+                 data: {note: text.val()},
+                 success: function(data){
+                    console.log(data)
+                }
+            });
+        });
+} );
+</script>
+{% endblock javascript %}

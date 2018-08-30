@@ -25,7 +25,7 @@ SECRET_KEY = 'a#bc276v@s+qbu&+1x5_h02fo!@ov_rs73)+kahllipdhhxc%9'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["sandbox.hki.uni-koeln.de", "134.95.80.220", "192.168.0.185", "141.90.202.208"]
 
 
 # Application definition
@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_results',
+    'psycopg2',
 ]
 
 MIDDLEWARE = [
@@ -51,8 +53,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'mysite.urls'
-MEDIA_ROOT = "D:/Uni/Masterarbeit/media_files"
-MEDIA_URL = "media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = "/media/"
 
 TEMPLATES = [
     {
@@ -77,9 +79,70 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 DATABASES = {
+    # 'sqlite': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    # },
+    # #read up here: https://github.com/PyMySQL/mysqlclient-python
+    # 'mysql': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'text_exploration_old',
+    #     'USER': 'text_exploration_admin',
+    #     'PASSWORD': 'iamanexplorer',
+    #     'HOST': '127.0.0.1',   # Or an IP Address that your DB is hosted on
+    #     'PORT': '3306',
+    #     'OPTIONS': {
+    #        'read_default_file': os.path.join(BASE_DIR, 'my.cnf'),
+    #     },
+    # },
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'text_exploration',
+        'USER': 'admin', #'nsaef',
+        'PASSWORD': 'password', #'dPSQL-PWins,uiweäm,af1re', #password
+        'HOST': '127.0.0.1', #'sandbox.hki.uni-koeln.de',
+        'PORT': '5432',
+    }
+}
+
+#https://www.dabapps.com/blog/logging-sql-queries-django-13/
+#https://stackoverflow.com/a/19107195/7398455
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'django.log',
+        },
+    }, 'loggers': {
+        # 'django.db.backends': {
+        #     'level': 'DEBUG',
+        #     'handlers': ['console'],
+        # },
+        # 'django.request': {
+        #     'handlers': ['file', 'console'],
+        #     'level': 'DEBUG',
+        #     #'propagate': False,
+        # # },
+        # 'django.server': {
+        #     'handlers': ['file', 'console'],
+        #     'level': 'DEBUG',
+        #     #'propagate': False,
+        # },
+        # 'django.template': {
+        #     'handlers': ['file', 'console'],
+        #     'level': 'DEBUG',
+        #     #'propagate': False,
+        # },
+        # 'django': {
+        #     'handlers': ['file', 'console'],
+        #     'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
+        # },
     }
 }
 
@@ -107,13 +170,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
 LANGUAGE_CODE = 'de-de'
-
 TIME_ZONE = 'Europe/Berlin'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
 
@@ -126,6 +185,24 @@ STATICFILES_DIRS = [
     "/CollectionExplorer/static",
     "/CollectionExplorer/static/corpora",
     "/CollectionExplorer/static/index",
+    "/CollectionExplorer/static/models"
 ]
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 20000
+
+### Celery ###
+
+CELERY_BROKER_URL = 'amqp://localhost'
+#CELERY_BROKER_URL = 'django://'
+CELERY_TIMEZONE = "Europe/Berlin"
+CELERY_RESULT_BACKEND = 'django-db'
+#CELERY_RESULT_BACKEND = 'db+mysql://root:@localhost:3306/text_exploration'
+CELERY_ALWAYS_EAGER = False
+CELERY_ACCEPT_CONTENT = ['pickle', "json"]
+CELERY_TASK_SERIALIZER = 'pickle'
+CELERY_RESULT_SERIALIZER = 'pickle'
+# if the heartbeat is 10.0 and the rate is the default 2.0, the check will be performed every 5 seconds
+# BROKER_HEARTBEAT=10.0,
+# BROKER_HEARTBEAT_CHECKRATE=2.0,
+#BROKER_CONNECTION_MAX_RETRIES=None,
+CELERYD_TASK_SOFT_TIME_LIMIT = 1*60*60*8 #8 hours

@@ -1,0 +1,10 @@
+<div>
+    <button type="button" class="btn btn-info" onclick="$(this).next('div.cluster_docs').toggle()">Dokumente ein-/ausblenden</button>
+    <div class="cluster_docs" style="display:none">
+        {% for d in docs %}
+            <p class="cluster_single_doc"><strong><a href="{% url 'document_detail' collection.id d.id %}">{{ d.title }}</a></strong> <br/>
+                <span class="cluster_doc_preview">{{ d.content|truncatewords:20 }} [...]</span>
+            </p>
+        {% endfor %}
+    </div>
+</div>

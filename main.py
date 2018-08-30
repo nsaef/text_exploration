@@ -6,6 +6,7 @@ from Analyzer import Analyzer
 from WordEmbedder import WordEmbedder
 from DocEmbedder import DocEmbedder
 from SearchEngine import SearchEngine
+from VersionHandler import VersionHandler
 from helpers import *
 from time import localtime, strftime
 import pickle
@@ -25,11 +26,26 @@ if __name__ == '__main__':
 
     #### Create a test corpus from the wikipedia dump and save it to disk #####
     # reader = Reader()
-    # corpus = reader.prepare_corpus(shuffle=True, size=200000)
-    # pickle.dump(corpus, open('resources/corpus_300k_filtered.c', 'wb'))
+
+    # corpus = reader.prepare_corpus(shuffle=True, size=3000)
+    # reader.write_reduced_corpus(corpus, r"D:/Uni/Masterarbeit/Beispieldaten/Wiki_partial_corpus_5k_versionierung/")
+
+    # corpus = reader.prepare_corpus(shuffle=True, size=3000)
+    # reader.write_reduced_corpus(corpus, r"D:/Uni/Masterarbeit/Beispieldaten/Wiki_partial_corpus_3k/")
+    #
+    # corpus = reader.prepare_corpus(shuffle=True, size=10000)
+    # reader.write_reduced_corpus(corpus, r"D:/Uni/Masterarbeit/Beispieldaten/Wiki_partial_corpus_10k/")
+    #
+    # corpus = reader.prepare_corpus(shuffle=True, size=50000)
+    # reader.write_reduced_corpus(corpus, r"D:/Uni/Masterarbeit/Beispieldaten/Wiki_partial_corpus_50k/")
+    #
+    # corpus = reader.prepare_corpus(shuffle=True, size=100000)
+    # reader.write_reduced_corpus(corpus, r"D:/Uni/Masterarbeit/Beispieldaten/Wiki_partial_corpus_100k/")
+
+    #pickle.dump(corpus, open('resources/corpus_300k_filtered.c', 'wb'))
 
     ### Load the previously created corpus ###
-    corpus = pickle.load(open("resources/corpus_10k_filtered.c", "rb"))
+    # corpus = pickle.load(open("resources/corpus_10k_filtered.c", "rb"))
 
 
     ### Tokenize, remove stopwords, save the result ###
@@ -40,14 +56,22 @@ if __name__ == '__main__':
     # save_file(corpus_tokenized, "corpus_300k_filtered_tokenized_with_stopwords_cs")
     # save_file(corpus_tokenized, "corpus_10k_test")
 
-    corpus_tokenized = pickle.load(open("resources/corpus_10k_filtered_tokenized_with_stopwords_cs.c", "rb"))
+    corpus_tokenized = pickle.load(open("/home/nsaef/projects/CollectionExplorer/web/CollectionExplorer/static/CollectionExplorer/corpora/12/12_tokens_stopwords-included_cs.corpus", "rb"))
+
+
+    ##### Versioning and Duplicates #####
+    version_handler = VersionHandler()
+    version_handler.calc_hashes(corpus_tokenized)
+    candidates = version_handler.calculate_similarities()
+
+
 
     ##### Topic Modelling #####
 
     # ### Vectorize the corpus using raw frequencies for lda ###
-    #processer_rf = Preprocesser()
-    #corpus_rf = processer_rf.vectorize_frequencies(corpus)
-    #feature_names = processer_rf.feature_names_raw
+    # processer_rf = Preprocesser()
+    # corpus_rf = processer_rf.vectorize_frequencies(corpus)
+    # feature_names = processer_rf.feature_names_raw
 
     # ### Create topic models using LDA ###
     # lda = TopicModeller(n_topics=30)
@@ -93,29 +117,29 @@ if __name__ == '__main__':
     # model = vectorizer.run(corpus_tokenized, filename="w2v_model_corpus100k_tokenized")
     # wv = model.wv
     # print(wv.most_similar(positive=['Frau', 'König'], negative=['Mann'], topn=5))
-    #model.most_similar(positive=['woman', 'king'], negative=['man'], topn=1)
+    # model.most_similar(positive=['woman', 'king'], negative=['man'], topn=1)
     # man is to king as woman to X
 
     ##### Doc Embeddings ####
-    vectorizer = DocEmbedder()
+    #vectorizer = DocEmbedder()
     #taggedDocs = vectorizer.prepare_corpus(corpus_tokenized)
-    model = vectorizer.run("d2v_10k_with_stopwords") #
-    wv = model.wv
+    #model = vectorizer.run("d2v_10k_with_stopwords") #
+    #wv = model.wv
 
     #use the model to infer the vectors for a smaller collection
     #taggedDocs = vectorizer.prepare_corpus(corpus_tokenized)
-    vectors = []
-    for doc in corpus_tokenized:
-        vectors.append(model.infer_vector(doc))
+    # vectors = []
+    # for doc in corpus_tokenized:
+    #     vectors.append(model.infer_vector(doc))
 
-    vectorizer.show_similar_docs(corpus, print_results=False)
+    # vectorizer.show_similar_docs(corpus, print_results=False)
 
     #clusterer = Clusterer(k=30)
     # reduced_vectors = clusterer.decompose(model.docvecs.doctag_syn0, n_components=50)
     # clusterer.test_feature_agglomoration(50, model.docvecs.doctag_syn0, corpus, model.docvecs)
     # reduced_vectors = clusterer.do_feature_agglomoration(model.docvecs.doctag_syn0)
 
-    #clusters_kmeans = clusterer.cluster_kmeans(model.docvecs, file_output=True, console_output=False, reduced_vectors=None, feature_names=corpus)
+    # clusters_kmeans = clusterer.cluster_kmeans(model.docvecs, file_output=True, console_output=False, reduced_vectors=None, feature_names=corpus)
     #clusters_kmeans = clusterer.cluster_kmeans(vectors, file_output=False, console_output=False, feature_names=corpus)
 
     # for i, center in enumerate(clusterer.kmeans_centers):

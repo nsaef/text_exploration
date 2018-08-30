@@ -10,80 +10,156 @@
     <!-- Werte jeweils in einen deaktivierten Input schreiben. Mit Klick auf Button wird input aktiviert. Muss in form sein, welches Daten per post schickt und so db ändert -->
         <p>Name: {{ collection.title }} <!--<button>umbenennen</button>--></p>
         <p>Pfad: {{ collection.path }} <!--<button>Pfad ändern</button>--></p>
-        <form action="{% url 'add_docs' collection.id %}" method="post">
-            {% csrf_token %}
-            <p><input type="submit" value="Dokumente neu einlesen"></p>
-        </form>
-        <p>
-            <form action="{% url 'results'%}" method="post">
-                {% csrf_token %}
-                <label for="query">Dokumente durchsuchen:</label>
-                <input id="query" name="query" type="text" class="form-control input" />
-                <input id="collection_id" name="collection_id" type="number" style="display:none" value="{{ collection.id }}"/>
-                <input type="submit" value="Suchen">
-            </form>
-        </p>
+{#        <form action="{% url 'add_docs' collection.id %}" method="post">#}
+{#            {% csrf_token %}#}
+{#            <p><input type="submit" class="btn btn-default" value="Dokumente neu einlesen"></p>#}
+{#        </form>#}
+    <button class="btn btn-info"><a href="{% url 'upload_files' collection.id %}">Weitere Dokumente hochladen</a></button>
+
     <h2>Überblick</h2>
-    {% process_collection collection remove_stopwords=False tokens=False sents=True as corpus %}
-    <h3>Häufigste Begriffe</h3>
-    {% get_highest_freq_words collection.id %}
-    <h3>Häufigste Namen und Orte</h3>
-    {% if collection.entities.all|length == 0 %}
-        {% get_named_entities collection.id %}
-    {% endif %}
+    <!-- Status der nötigen Dateien/Named Entities etc + buttons zum erzeugen -->
+    <!-- Links zu den Analyse-Seiten -->
+    <p><a href="{% url 'collection_statistics' collection.id %}">Statistische Analyse</a>: Häufigste Wörter, N-Gramme, Named Entities</p>
+    <p><a href="{% url 'collection_semantics' collection.id %}">Semantische Analyse</a>: Topic Models, Dokument-Cluster</p>
+    <p><a href="{% url 'analyse_vocabulary' collection.id %}">Vokabular analysieren</a></p>
+    <h3>Voraussetzungen/Ressourcen</h3>
     <table class="table table-striped">
         <thead>
-            <tr><th>Typ</th><th>Name</th><th>Anzahl</th></tr>
+            <tr>
+                <th>Ressource</th><th>Zweck</th><th>Voraussetzung</th><th>Status</th><th>Aktion</th>
+            </tr>
         </thead>
         <tbody>
-        {% for entity in collection.entities.all %}
             <tr>
-                <td>{{ entity.type }}</td>
-                <td>{{ entity.name }}</td>
-                <td>{{ entity.frequency }}</td>
+                <td>Korpus 1: Text in Sätze</td>
+                <td>Named Entity Recognition (Personen und Orte)</td>
+                <td>-</td>
+                <td>{% check_corpus_status collection.id "corpora" "sents" %}</td>
+                <td>
+                    <form action="{% url 'create_file' collection.id %}" method="post">{% csrf_token %}
+                        <input type="checkbox" name="sents" checked style="display:none">
+                        <input type="submit" class="btn btn-info" value="erzeugen">
+                    </form>
+                </td>
             </tr>
-        {% empty %}
-            <tr><td>-</td><td>-</td><td>-</td></tr>
-        {% endfor %}
+            <tr>
+                <td>Korpus 2: Tokenisiert, ohne Stopwords</td>
+                <td>Häufigste Worte, N-Grams</td>
+                <td>-</td>
+                <td>{% check_corpus_status collection.id "corpora" "tokens_stopwords-excluded_cs" %}</td>
+                <td>
+                    <form action="{% url 'create_file' collection.id %}" method="post">{% csrf_token %}
+                        <input type="checkbox" name="tokens" checked style="display:none">
+                        <input type="checkbox" name="remove_stopwords" checked style="display:none">
+                        <input type="submit" class="btn btn-info" value="erzeugen">
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td>Korpus 3: Tokenisiert, vollständig</td>
+                <td>Topic Models, semantische Cluster, ähnliche Dokumente, ähnliche Suchbegriffe</td>
+                <td>-</td>
+                <td>{% check_corpus_status collection.id "corpora" "tokens_stopwords-included_cs" %}</td>
+                <td>
+                    <form action="{% url 'create_file' collection.id %}" method="post">{% csrf_token %}
+                        <input type="checkbox" name="tokens" checked style="display:none">
+                        <input type="submit" class="btn btn-info" value="erzeugen">
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td>Vektor-Repräsentation der häufigsten Worte</td>
+                <td>Topic Models</td>
+                <td>Korpus 3</td>
+                <td>{% check_corpus_status collection.id "corpora" "rf_stopwords-included_cs" %}</td>
+                <td>
+                    <form action="{% url 'create_file' collection.id %}" method="post">{% csrf_token %}
+                        <input type="checkbox" name="raw_frequencies" checked style="display:none">
+                        <input type="submit" class="btn btn-info" value="erzeugen">
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td>Tf-IdF-Vektor-Repräsentation</td>
+                <td>Cluster</td>
+                <td>Korpus 3???</td>
+                <td>{% check_corpus_status collection.id "corpora" "tf-idf_stopwords-included_cs" %}</td>
+                <td>
+                    <form action="{% url 'create_file' collection.id %}" method="post">{% csrf_token %}
+                        <input type="checkbox" name="tf_idf" checked style="display:none">
+                        <input type="submit" class="btn btn-info" value="erzeugen">
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td>Volltext-Index</td>
+                <td>Volltextsuche</td>
+                <td>-</td>
+                <td>{% check_corpus_status collection.id "index" %}</td>
+                <td>
+                    <form action="{% url 'create_file' collection.id %}" method="post">{% csrf_token %}
+                        <input type="checkbox" name="fulltext" checked style="display:none">
+                        <input type="submit" class="btn btn-info" value="erzeugen">
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td>Sprachmodell</td>
+                <td>semantische Cluster, ähnliche Dokumente, ähnliche Suchbegriffe</td>
+                <td>Korpus 3</td>
+                <td>{% check_corpus_status collection.id "models" %}</td>
+                <td>
+                    <form action="{% url 'create_file' collection.id %}" method="post">{% csrf_token %}
+                        <input type="checkbox" name="model" checked style="display:none">
+                        <input type="submit" class="btn btn-info" value="erzeugen">
+                    </form>
+                </td>
+            </tr>
         </tbody>
     </table>
 
+    <h3>Duplikate und Versionen finden</h3>
+    <p>Erläuternder Text, der über Unsicherheit von Versionen aufklärt</p>
+    <a class="btn btn-info" role="button" href="{% url 'find_versions' collection.id %}">Versionen finden</a>
 
-    <h2>Dokumente</h2>
-    <table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Vorschau</th>
-            <th>Pfad</th>
-            <th>Datum</th>
-        </tr>
-    </thead>
-    <tbody>
-        {%  for doc in collection.documents.all %}
-            <tr>
-                <td><a href="{% url 'document_detail' doc.id %}">{{ doc.title }}</a></td>
-                <td>{{ doc.content|truncatewords:50 }}</td>
-                <td>{{ doc.path }}</td>
-                <td>{{ doc.date }}</td>
-            </tr>
-        {% empty %}
-            <tr><td>Keine Dokumente vorhanden</td><td></td><td></td><td></td></tr>
-        {% endfor %}
-    </tbody></table>
+
+    <h2 id="doc_table_heading">Dokumente (ohne Duplikate)</h2>
+    <button class="btn btn-info" onclick="$('.doctable').DataTable().columns().search('').draw()">Alles anzeigen (inkl. Duplikate)</button>
+    <button class="btn btn-info" onclick="filter_table(3, 'True')">Nur interessante Dokumente</button>
+    <button class="btn btn-info" onclick="filter_table(3, 'False')">Nur nicht interessante Dokumente</button>
+    <button class="btn btn-info" onclick="filter_table(3, 'None')">Nur nicht bewertete Dokumente</button>
+    <button class="btn btn-default" onclick="filter_table(4, 0)">Zurücksetzen</button>
+
+    {% include "./includes/doc_table.html" with docs=collection.documents.all %} <!--collection.documents.all-->
 
 {% endblock content %}
 
 {% block javascript %}
 <script>
     $(document).ready(function() {
-        var tables = $('table').DataTable({
+
+     var doctable = $('.doctable').DataTable({
             "paging": true,
             "ordering": true,
             "info": true,
-            "searching": true
+            "searching": true,
+            "order": [[1, "desc"]],
+            "columnDefs": [
+                {
+                    "targets": [ 3, 4 ],
+                    "visible": false
+                }]
         });
-        console.log(tables);
+
+     filter_table(4, 0);
+
+    $("#nav_collection_id").val({{ collection.id }});
 } );
+
+    function filter_table(c, val) {
+        var table = $('.doctable').DataTable();
+        table.column(c).search(val).draw();
+     }
+
 </script>
 {% endblock javascript %}

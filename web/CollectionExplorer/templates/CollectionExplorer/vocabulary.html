@@ -1,0 +1,115 @@
+{% extends "./basic_page.html" %}
+
+{% load collection_tags %}
+
+{% block title %} Vokabular untersuchen {% endblock title %}
+
+{% block content %}
+    <h1>Vokabular untersuchen</h1>
+    {% lorem %}
+    <br/>
+
+    <div>
+        <h2>Abfrage</h2>
+        <p>Datenquelle auswählen:</p>
+        <div class="form-check form-check-inline">
+            <label for="current_collection">Aktuelle Sammlung: {{ collection.title }}</label>
+            <input class="form-check-input" type="radio" id="current_collection" name="data_source" checked/>
+            {% comment %}            </div>
+
+                <div class="form-check form-check-inline">{% endcomment %}
+            <label for="reference_collection">Referenz-Vokabular</label>
+            <input class="form-check-input" type="radio" id="reference_collection" name="data_source"/>
+        </div>
+
+
+        <p><label for="word_a">Wort </label>
+            <input type="text" id="word_a" name="word_a" placeholder="Mann">
+
+            <label for="word_b"> verhält sich zu Wort </label>
+            <input type="text" id="word_b" name="word_b" placeholder="Frau">
+
+            <label for="word_c"> wie Wort </label>
+            <input type="text" id="word_c" name="word_c" placeholder="König">
+
+            zu X
+
+            <button class="btn btn-info" onclick="analyse_words('comparison')">Abschicken</button>
+        </p>
+
+
+        <p><label for="num_results">Ähnlichste </label>
+            <input type="number" id="num_results" name="num_results" placeholder="10" value="10">
+
+            <label for="cmp_word">Worte zu X</label>
+            <input type="text" id="cmp_word" name="cmp_word" placeholder="Buch">
+
+            <button type="submit" class="btn btn-info" onclick="analyse_words('similarity')">Abschicken</button>
+        </p>
+
+        <h2>Ergebnis</h2>
+        <div id="result-area">
+            <p>Kein Ergebnis verfügbar.</p>
+        </div>
+
+    </div>
+
+
+{% endblock content %}
+
+
+{% block javascript %}
+    <script>
+        var csrftoken = Cookies.get('csrftoken');
+
+        function analyse_words(target) {
+            var data_source = get_data_source();
+
+            var word_a = "";
+            var word_b = "";
+            var word_c = "";
+            var cmp_word = "";
+            var cmp_n = 0;
+
+            if (target == "similarity") {
+                cmp_word = $("#cmp_word").val();
+                cmp_n = $("#num_results").val();
+                console.log(cmp_word);
+                console.log(cmp_n);
+            } else if (target == "comparison") {
+                word_a = $("#word_a").val();
+                word_b = $("#word_b").val();
+                word_c = $("#word_c").val();
+            }
+
+            $("body").css("cursor", "wait");
+
+            $.ajax({
+                type: "POST",
+                url: "#",
+                headers: {'X-CSRFToken': csrftoken},
+                data: {
+                    source: data_source,
+                    type: target,
+                    n: cmp_n,
+                    word: cmp_word,
+                    word_a: word_a,
+                    word_b: word_b,
+                    word_c: word_c
+                },
+                success: function (data) {
+                    $("body").css("cursor", "default");
+                    if (data !== "None") {
+                        $("#result-area").html(data);
+                    }
+                }
+            });
+        }
+
+        function get_data_source() {
+            if ($("#current_collection").is(":checked")) return "current_collection";
+            else return "reference_collection";
+        }
+
+    </script>
+{% endblock javascript %}

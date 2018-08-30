@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 import os
 import sys
+from django.core.management.commands.runserver import Command as runserver
 
 if __name__ == "__main__":
+    runserver.default_port = "8000"
+    runserver.default_addr = "sandbox.hki.uni-koeln.de"
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
     try:
         from django.core.management import execute_from_command_line
@@ -13,3 +16,5 @@ if __name__ == "__main__":
             "forget to activate a virtual environment?"
         ) from exc
     execute_from_command_line(sys.argv)
+
+

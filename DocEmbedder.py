@@ -4,7 +4,8 @@ from time import time, localtime, strftime
 from random import randint
 
 class DocEmbedder(object):
-    def __init__(self, size=100, window=8, min_count=1, workers=4):
+    #TODO: Always adapt to power of current machine
+    def __init__(self, size=100, window=8, min_count=1, workers=10):
         self.d2v_size = size
         self.d2v_window = window
         self.d2v_min_count = min_count
@@ -21,13 +22,16 @@ class DocEmbedder(object):
         self.model = gensim.models.Doc2Vec.load(path)
         print("Model loaded")
 
-    def run(self, filename=None):
+    def run(self, filename=None, path=None, corpus=None):
         if filename != None:
             path = r".\resources\model_" + filename + ".mdl"
 
+        if path != None:
             if os.path.isfile(path):
                 self.loadDoc2Vec(path)
             else:
+                if self.documents is None and corpus is not None:
+                    self.prepare_corpus(corpus)
                 self.doc2vec()
                 self.saveDoc2Vec(path)
         else:
@@ -38,8 +42,8 @@ class DocEmbedder(object):
         print("Preparing corpus for doc2vec")
         t0 = time()
         taggedDocs = []
-        for idx, doc in enumerate(corpus):
-            d = gensim.models.doc2vec.TaggedDocument(doc, [idx])
+        for id, doc in corpus.items():
+            d = gensim.models.doc2vec.TaggedDocument(doc, [id])
             taggedDocs.append(d)
         self.documents = taggedDocs
         print("done in %fs" % (time() - t0))
@@ -65,20 +69,29 @@ class DocEmbedder(object):
         else:
             f = None
 
-        print("Finding documents similar to index ", doc_id,  " in a corpus of size ", len(corpus), ":\n", file=f)
+        print("Finding documents similar to document with the id ", doc_id,  " in a corpus of size ", len(corpus), ":\n", file=f)
 
-        most_sim = self.model.docvecs.most_similar(doc_id, topn=topn)
+        try:
+            most_sim = self.model.docvecs.most_similar(doc_id, topn=topn)
+        except KeyError as e:
+            most_sim = []
+            print(e)
 
-        print("Document:", file=f)
-        print(corpus[doc_id][0:500], "...\n", file=f)
+        #print("Document:", file=f)
+       # print(corpus[doc_id][0:150], "...\n", file=f)
 
+        results = []
         print("Most similar ", topn, " documents from the corpus:\n", file=f)
         for i, result in enumerate(most_sim):
-            print("doc nr. ", i, ", score: ", result[1], file=f)
-            text = corpus[result[0]]
-            print(text[0:300], "...\n", file=f)
+            #print("doc nr. ", i, ", score: ", result[1], file=f)
+            id = result[0]
+            score = result[1]
+            #text = corpus[id]
+            #print(text[0:300], "...\n", file=f)
+            results.append((id, score))
 
         if print_results is True:
             f.close()
             print("result saved in " + path)
-        return
+        return results
+

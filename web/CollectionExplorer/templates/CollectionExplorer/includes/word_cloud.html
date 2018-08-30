@@ -1,0 +1,124 @@
+{% load static %}
+
+{{ data|json_script:"data" }}
+
+<div id="wordcloud"></div>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="{% static 'CollectionExplorer/js/d3.layout.cloud.js' %}"></script>
+
+<style>
+    text:hover {
+        text-decoration: underline;
+        cursor: pointer;
+    }
+</style>
+
+<script type="text/javascript">
+
+    function filterWourdCloud(input) {
+        console.log(input);
+        $("#query").val(input);
+        $("#search_form").submit();
+    }
+
+
+    {% comment %}<a href="{%  url "results" %}?col=14&query=test">{{ word }}</a>: {{ count }}{% endcomment %}
+    var words = JSON.parse(document.getElementById('data').textContent);
+    var data = [];
+
+    Object.keys(words).forEach(function (key, index) {
+        var item = {"text": key, "size": words[key]};
+        data.push(item);
+    });
+
+    //console.log(data);
+
+    var wordcloud;
+
+
+    $(function () {
+        config = {};
+        config.size = [800, 600];
+        config.fillColor = d3.scale.category20b();
+        config.fontSize = d3.scale.log().range([1, 15]);
+
+        function draw(data) {
+            var size = config.size;
+
+            wordcloud = d3.select("#wordcloud")
+                .append("svg")
+                .attr("width", size[0])
+                .attr("height", size[1])
+                //.style("background-color", "#000000")
+                .append("g")
+                .attr("transform", "translate(" + (size[0] / 2) + "," + (size[1] / 2) + ")");
+
+            wordcloud.selectAll("text")
+                .data(data)
+                .enter().append("text")
+                .style("font-size", function (d) {
+                    return d.size * 1 + "px";
+                })
+                .style("fill", function (d) {
+                    return config.fillColor(d.text.toLowerCase());
+                })
+                .attr("text-anchor", "middle")
+                .attr("transform", function (d) {
+                    return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+                })
+                .attr("onclick",
+                    function (d) {
+                        return "filterWourdCloud('" + d.text + "')";
+                    }
+                )
+                .text(function (d) {
+                    return d.text;
+                });
+        }
+
+        var layout = d3.layout.cloud()
+            .size(config.size)
+            .words(data)
+            .font("Impact")
+            .fontSize(function (d) {
+                return config.fontSize(+d.size); //+(d.size / 20)
+            })
+            .rotate(function () {
+                return ~~(Math.random() * 5) * 30 - 60;
+            })
+            .on("end", draw);
+
+        layout.start();
+
+    });
+
+
+</script>
+
+<script>
+
+    //config.fontSize = d3.scaleLog().range([1, 15]);
+    //config.fillColor = d3.interpolateRainbow(20);
+
+
+    // Method is assumed to be a standard D3 getter-setter:
+    // If passed with no arguments, gets the value.
+    // If passed with arguments, sets the value and returns the target.
+    {% comment %}    function d3_rebind(target, source, method) {
+            return function () {
+                var value = method.apply(source, arguments);
+                return value === source ? target : value;
+            };
+        }{% endcomment %}
+
+
+    {% comment %}
+            d3.rebind = function (target, source) {
+                var i = 1, n = arguments.length, method;
+                while (++i < n) target[method = arguments[i]] = d3_rebind(target, source, source[method]);
+                return target;
+            };
+    {% endcomment %}
+
+
+</script>

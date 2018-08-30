@@ -73,6 +73,12 @@ class Reader(object):
     def write_reduced_corpus(self, corpus, directory):
         if not directory:
             directory = r"D:/Uni/Masterarbeit/Beispieldaten/Wiki_partial_corpus/"
+
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+
+            #überprüfung einbauen, ob dir mit slash endet
+
         for doc in corpus:
             try:
                 title = doc[2:doc.find("]]")].replace("/", " ")

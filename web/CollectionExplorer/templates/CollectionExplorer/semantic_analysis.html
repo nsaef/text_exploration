@@ -1,0 +1,73 @@
+{% extends "./basic_page.html" %}
+
+{% load collection_tags %}
+
+{% block title %}{{ collection.title }} - Semantische Analyse {% endblock title %}
+
+{% block content %}
+    <h1>Semantische Analysen der Sammlung {{ collection.title }}</h1>
+    <p>Erklärtext über Clustering, die Datengrundlage und Topic Modelling. Je größer die Sammlung, desto mehr Cluster. Sollten gesuchten/gwünschten Gruppen entsprechen. Wenn ahnungslos: ausprobieren. Achtung: Wartezeit!</p>
+    <form action="#" method="get">
+        <div class="form-group">
+            <label for="n_clusters">Zahl der zu bildenden Cluster/Topics</label>
+            <input class="form-control" type="number" id="n_clusters" name="n_clusters">
+            <br/>
+            <label for="d2v">Semantische Dokument-Cluster</label>
+            <input type="checkbox" name="doc2vec" id="d2v">
+            <br/>
+            <label for="tf_idf">Tf-Idf-Cluster</label>
+            <input type="checkbox" name="tf_idf" id="tf_idf">
+            <br/>
+            <label for="topics">Topic Modelling</label>
+            <input type="checkbox" name="topics" id="topics">
+            <br/>
+            <button class="btn btn-info" type="submit">Neue Analyse</button>
+        </div>
+    </form>
+
+    {% if n_clusters is not None %}
+    <h1>{{ collection.title }} - Semantische Analyse </h1>
+
+        {% if doc2vec is not False %}
+            {% get_doc2vec_model collection as d2v_model %}
+            {% get_clusters collection.id corpus=d2v_model doc2vec=True k=n_clusters as clusters %}
+            {% include "./includes/semantic_clusters.html" with clusters=clusters %}
+        {% endif %}
+
+        {% if topics is not False %}
+            {% create_topic_models collection n_clusters as topics %}
+            <h4>Topic Models</h4>
+            {% for topic in topics %}
+                <h5>Cluster #{{ forloop.counter }}</h5>
+                <h6>Begriffe</h6>
+                {{ topic.desc }}
+                <h6>Dokumente</h6>
+                    {% include "./large_doc_list.html" with docs=topic.docs %}
+            {% endfor %}
+        {% endif %}
+
+        {% if tf_idf is not False %}
+            {% get_clusters collection.id tf_idf=True k=n_clusters as clusters %}
+            {% include "./includes/semantic_clusters.html" with clusters=clusters %}
+        {% endif %}
+
+    {% endif %}
+
+{% endblock content %}
+
+{% block javascript %}
+<script>
+    $(document).ready(function() {
+        var tables = $('table').DataTable({
+            "paging": true,
+            "ordering": true,
+            "info": true,
+            "searching": true
+        });
+        console.log(tables);
+
+        //gilt nur für diese seite und verschwindet be documents
+        $("#nav_collection_id").val({{ collection.id }});
+} );
+</script>
+{% endblock javascript %}

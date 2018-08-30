@@ -9,7 +9,21 @@
     {% ft_search collection query as results %}
 
     <h1>Suchergebnis</h1>
-    <p>Ergebnisse für die Suche nach "{{ query }}" in der Sammlung {{ collection.title }}</p>
+    <p>Ergebnisse für die Suche nach "{{ query }}" in der Sammlung <a href="{% url 'collection_detail' collection.id %}">{{ collection.title }}</a></p>
+
+    {% get_similar_words query collection.id as words %}
+
+    {% for word, list in words %}
+        <p>Ähnliche Suchbegriffe für {{ word }} könnten sein:
+        {% for item, score in list %}
+            <span class="searchable">{{ item }}</span>
+            {% if not forloop.last %}
+            ,
+            {% endif %}
+        {% endfor %}
+        </p>
+    {% endfor %}
+
     <table class="table table-striped">
         <thead>
             <tr>
@@ -22,7 +36,7 @@
         <tbody>
             {% for doc, preview in results %}
             <tr>
-                <td><a href="{% url 'document_detail' doc.id %}">{{ doc.title }}</a></td>
+                <td><a href="{% url 'document_detail' collection.id doc.id %}">{{ doc.title }}</a></td>
                 <td>{{ preview|safe }}</td>
                 <td>{{ doc.path }}</td>
                 <td>{{ doc.date }}</td>

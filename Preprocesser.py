@@ -7,31 +7,26 @@ import nltk.data
 import string
 
 
-
-### To add: at least stopword removal ###
-
 class Preprocesser(object):
     def __init__(self):
         print("preprocessing...")
         self.feature_names_raw = None
         self.feature_names_tfidf = None
         self.corpus_cleaned_string = []
-        self.corpus_tokenized = []
+        self.corpus_tokenized = {}
         self.corpus_sentences = []
 
         self.stopwords = nltk.corpus.stopwords.words('german')
-        self.stopwords.extend(["==", "===", "====", "s.", "dass", "the", "of", "de", "wurde", "**", "ab", "sowie", "etwa", "i."])
+        self.stopwords.extend(["==", "===", "====", "s.", "dass", "the", "of", "de", "wurde", "**", "ab", "sowie", "etwa", "i.", '"', "...", "…", '“', '”', "'", "=", "»", "«"])
 
     def tokenize(self, corpus, remove_stopwords=True, cs=True):
         # NLTK's default German stopwords
-        self.split_sentences(corpus)
+        #self.split_sentences(corpus.values())
 
         print("running tokenize...")
         t0 = time()
 
-        # steps apparently: tokenize using the nltk
-        for article in corpus:
-            #article_str = ""
+        for id, article in corpus:
             article_list = []
             sent_tokenizer = nltk.data.load("tokenizers/punkt/german.pickle")
 
@@ -42,21 +37,24 @@ class Preprocesser(object):
                             article_list += [token]
                         else:
                             article_list += [token.lower()]
-            self.corpus_tokenized.append(article_list)
+            self.corpus_tokenized[id] = article_list
         print("done in %0.3fs" % (time() - t0))
         return
 
-    def split_sentences(self, corpus):
+
+    def split_sentences(self, corpus, multiple=True):
         print("splitting corpus into sentences...")
         t0 = time()
 
         tokenizer = nltk.data.load("tokenizers/punkt/german.pickle")
 
-        for doc in corpus:
-            test = "test"
-            self.corpus_sentences.append(tokenizer.tokenize(doc)) #nltk.tokenizer.tag_sents(doc)
-        print("done in %0.3fs" % (time() - t0))
-        return
+        if multiple is True:
+            for id, doc in corpus:
+                self.corpus_sentences.append(tokenizer.tokenize(doc)) #nltk.tokenizer.tag_sents(doc)
+            print("done in %0.3fs" % (time() - t0))
+            return
+        else:
+            return tokenizer.tokenize(corpus)
 
 
     def vectorize_tfidf(self, obj):

@@ -1,0 +1,35 @@
+<table class="table doctable table-striped">
+    <thead>
+        <tr>
+            <th>Status</th>
+            <th>Name</th>
+            <th>Vorschau</th>
+            <th>Bewertet</th>
+            <th>Duplikat</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if collection.documents.count == 0 %}
+            <td></td><td>Keine Dokumente vorhanden</td><td></td><td></td><td></td>
+        {% else %}
+            {%  for doc in collection.unique_docs.unique_docs %}
+                <tr>
+                    <td>{% include "./favorite.html" with doc=doc %}</td>
+                    <td><a href="{% url 'document_detail' collection.id doc.id %}">{{ doc.title }}</a></td>
+                    <td>{{ doc.content|truncatewords:50 }}</td>
+                    <td>{{ doc.interesting }}</td>
+                    <td>0</td>
+                </tr>
+            {% endfor %}
+            {%  for doc in collection.unique_docs.duplicates %}
+                <tr>
+                    <td>{% include "./favorite.html" with doc=doc %}</td>
+                    <td><a href="{% url 'document_detail' collection.id doc.id %}">{{ doc.title }}</a></td>
+                    <td>{{ doc.content|truncatewords:50 }}</td>
+                    <td>{{ doc.interesting }}</td>
+                    <td>1</td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+</table>

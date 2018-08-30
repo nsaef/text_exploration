@@ -2,6 +2,7 @@ import os, os.path
 from whoosh import index
 from whoosh.index import create_in
 from whoosh.fields import *
+from whoosh.writing import AsyncWriter
 from whoosh import qparser
 from whoosh.qparser import QueryParser
 from time import time
@@ -9,7 +10,7 @@ import datetime
 
 
 class SearchEngine(object):
-    def __init__(self, collection_path, index_path, collection_id):
+    def __init__(self, index_path, collection_id, local=False, collection_path=None):
         self.index_dir = index_path + str(collection_id)
         self.schema = Schema(title=TEXT(stored=True), path=ID(stored=True), content=TEXT(stored=True), date=DATETIME(stored=True))
         self.ix = None
@@ -19,7 +20,10 @@ class SearchEngine(object):
         if index.exists_in(self.index_dir):
             print("Loading index...")
             self.ix = index.open_dir(self.index_dir)
-            self.writer = self.ix.writer()
+            self.writer = AsyncWriter(self.ix)
+        elif local is False:
+            print("Build index from Django docs in separate step!")
+            return
         else:
             self.build_index(collection_path)
         self.searcher = self.ix.searcher()
@@ -29,7 +33,8 @@ class SearchEngine(object):
         parser = QueryParser("content", self.ix.schema)
         parser.add_plugin(qparser.FuzzyTermPlugin())
         myquery = parser.parse(query)
-        results = self.searcher.search(myquery, limit=limit)
+        results = {"searcher": self.searcher}
+        results["result"] = self.searcher.search(myquery, limit=limit)
         # print(len(results), " results in total")
         # #print(results[0:results.scored_length()])
         # for hit in results[0:results.scored_length()]:
@@ -38,19 +43,23 @@ class SearchEngine(object):
         #     print(hit.highlights("content"))
         return results
 
-    def build_index(self, file_dir):
+    def build_index(self, file_dir=None, files=None):
         print("Creating a new index...")
         t0 = time()
 
         self.ix = index.create_in(self.index_dir, schema=self.schema)
         self.writer = self.ix.writer(limitmb=2048) #, procs=2, multisegment=True #check: AsyncWriter, BufferedWriter
 
-        if os.path.exists(file_dir):
+        if file_dir is not None and os.path.exists(file_dir):
             files = os.listdir(file_dir)
             for file in files:
                 path = file_dir + "/" + file
                 if os.path.isdir(path) is True: continue
                 self.add_doc(file, path)
+
+        elif files is not None:
+            for doc in files:
+                self.writer.add_document(title=doc["title"], path=doc["path"], content=doc["content"], date=doc["date"])
         self.writer.commit()
 
         print("done in %fs" % (time() - t0))

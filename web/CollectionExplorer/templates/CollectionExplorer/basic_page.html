@@ -1,10 +1,14 @@
 {% load static %}
+{% load basic_tags %}
+{% get_collection_list as collections %}
+{% get_item request.session "collection_id" as col_id %}
 
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}Document Collection Explorer{% endblock %}</title>
+    <link href="{% static 'CollectionExplorer/img/favicon.ico' %}" rel="icon" type="image/x-icon" />
 
 <!-- CSS -->
     <!-- Bootstrap: Latest compiled and minified CSS -->
@@ -18,8 +22,11 @@
     <!-- DataTables -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css">
 
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
     <!-- CollectionExplorer StyleSheet -->
-    <link rel="stylesheet"  type="text/css" href="{% static 'CollectionExplorer/style.css' %}"/>
+    <link rel="stylesheet"  type="text/css" href="{% static 'CollectionExplorer/style/style.css' %}"/>
 
 <!-- JAVASCRIPT -->
  <!-- JQuery -->
@@ -33,11 +40,16 @@
             integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
             crossorigin="anonymous"></script>
 
+    <!-- Cookie handling -->
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+
     <!-- DataTables -->
     <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
 
     <!-- DataTables -->
     <script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
+
+    <script src="{% static 'CollectionExplorer/js/app.js' %}"></script>
 </head>
 <body>
 {% block navbar %}
@@ -61,24 +73,28 @@
                     <li><a href="#">Link</a></li>
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
-                           aria-expanded="false">Dropdown <span class="caret"></span></a>
+                           aria-expanded="false">Collections <span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            <li><a href="#">Action</a></li>
-                            <li><a href="#">Another action</a></li>
-                            <li><a href="#">Something else here</a></li>
-                            <li role="separator" class="divider"></li>
-                            <li><a href="#">Separated link</a></li>
-                            <li role="separator" class="divider"></li>
-                            <li><a href="#">One more separated link</a></li>
+                        {% if collections %}
+                            {% for collection in collections %}
+                                <li id="{{ collection.id }}"><a href="{% url 'collection_detail' collection.id %}">{{ collection.title }}</a></li>
+                            {% endfor %}
+                        {% endif %}
                         </ul>
                     </li>
                 </ul>
-                <form class="navbar-form navbar-left">
+
+
+                <form id="search_form" class="navbar-form navbar-left" action="{% url 'results'%}" method="post">
+                    {% csrf_token %}
                     <div class="form-group">
-                        <input type="text" class="form-control" placeholder="Search">
+                        <input id="query" name="query" type="text" class="form-control" placeholder="Suche in Sammlung {{ col_id }}">
                     </div>
+                    <input id="nav_collection_id" name="collection_id" type="number" style="display:none" value="{{ col_id }}"/>
                     <button type="submit" class="btn btn-default">Submit</button>
                 </form>
+
+
                 <ul class="nav navbar-nav navbar-right">
                     <li><a href="/admin/">Admin</a></li>
                     <li class="dropdown">
@@ -111,5 +127,12 @@
     </div>
 </div>
 </body>
-{% block javascript %} {% endblock %}
+{% block javascript %}
+    <script>
+    function select_collection(id) {
+        $("#"+id).prop("selected");
+    }
+    //add a function that sets the active property to the currently selected part of the nav
+    </script>
+ {% endblock %}
 </html>

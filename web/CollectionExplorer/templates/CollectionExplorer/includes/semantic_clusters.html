@@ -1,0 +1,5 @@
+<h4>Semantintische Cluster</h4>
+{% for docs in clusters.items %}
+    <h5>Dokumente im Cluster {{ docs.0 }} ({{ docs.1|length }})</h5>
+    {% include "./large_doc_list.html" with docs=docs.1 %}
+{% endfor %}

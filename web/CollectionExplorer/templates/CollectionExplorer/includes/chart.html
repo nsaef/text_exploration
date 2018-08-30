@@ -1,0 +1,316 @@
+<div style="position:relative; height:100%">
+    <div id="chart"></div>
+    <p><b>Legende</b></p>
+    <div id='desc' style='columns:2;font-size:12px;margin:0 5px;max-width:450px;'></div>
+</div>
+
+<script type="application/javascript">
+    var c3_charts = [];
+    var all_charts = [];
+    all_charts = ;
+    console.log(all_charts);
+    //var colors = ['#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f', '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'];
+    var colors_scatter = ['#1f77b4', '#ff7f0e', '#2ca02c','#d62728', '#9467bd', '#8c564b', '#e377c2', '#67697c', '#ff9896', '#17becf', '#8d99ae'];
+    var colors_bars = ["#0e2436", "#13324b", "#174060", "#1c4d74", "#205b89", "#25699e", "#2977b4", "#2d85c9", "#3c91d4", "#509dd9"];
+    //var categories = ["<?= $tr_analysis_label_vermischte_sb[$lang] ?>", "<?= $tr_analysis_label_rechnungsbuecher[$lang] ?>", "<?= $tr_analysis_label_gerichtsbuecher[$lang] ?>"];
+
+    for (var c = 0; c < all_charts.length; ++c) {
+
+        $("<h2>" + all_charts[c].chart_title + "</h2>").insertBefore('#chart' + c);
+        $("#date" + c).append("<p><?= $tr_stand[$lang] ?>: " + all_charts[c].mod_date + "</p>");
+
+        //$("#chart" + c).addClass(all_charts[c].type);
+
+        var data = JSON.parse(all_charts[c].data);
+
+        var config = {};
+        config.bindto = '#chart' + c;
+        config.size = {};
+        config.size.width = all_charts[c].width;
+        config.size.height = all_charts[c].height;
+        config.padding = {};
+        config.padding.top = 0;
+        config.data = {};
+        config.data.color = function(color, d) {
+            //d (das aktuelle d, ohne Kenntnisse vom vorherigen oder nächsten!) ist der einzige Parameter, der nach der erstmaligen Erzeugung zur Verfügung steht. Die Funktion wird bei jeder Größenänderung des Fensters neu ausgeführt und hat danach nur die Parameter aus der LETZTEN Version der config (c == 13). Bei Scatterplots müssen also, solange sie auf einer Seite mit anderen Charts genutzt werden, eindeutige Labels genutzt werden.
+            if (d.id == "<?= $tr_beginn[$lang] ?>" || (all_charts[c] !== undefined && all_charts[c].type == "scatter")) return colors_scatter[d.x];
+            else if (d.id !== undefined && categories.indexOf(d.id) !== -1) {
+                return colors_scatter[categories.indexOf(d.id)];
+            } else return colors_bars[d.x];
+        };
+        config.data.x = all_charts[c].data_x;
+        config.data.mimeType = all_charts[c].mimeType;
+        config.data.json = data;
+        config.data.columns = all_charts[c].columns;
+        config.data.keys = {};
+        config.data.keys.x = all_charts[c].keys_x;
+        config.data.keys.value = all_charts[c].label;
+        config.data.type = all_charts[c].type;
+        config.axis = {};
+        config.axis.rotated = all_charts[c].axis_rotated;
+        config.axis.x = {};
+        config.axis.x.height = 60;
+        config.axis.x.tick = {};
+        //config.axis.x.tick.width = 60;
+        config.axis.x.tick.multiline = false;
+        config.axis.x.tick.culling = {};
+        //config.axis.x.tick.culling.max = all_charts[c].culling_max;
+        config.axis.x.show = true;
+        config.axis.x.type = 'category';
+        //config.axis.x.height = all_charts[c].x_height;
+        config.axis.y = {};
+        //config.axis.y.label = {text: 'Anzahl'};
+        config.axis.y.label = {};
+        config.axis.y.label.text = all_charts[c].x_label;
+        config.axis.y.padding = {bottom: 0};
+        config.point = {};
+        config.point.r = all_charts[c].point_r;
+        config.legend = {show: false};
+
+        //console.log(config.tooltip);
+
+        var label_stretch = 1.3;
+        var label_padding = 15;
+        var longest_label_len = 0;
+
+        $(data).each(function (i) {
+            if (config.data.json !== null && config.data.json[i].text !== undefined) {
+                var x = i + 1;
+                $("#desc" + c).append("<p>" + x + ": <a href='" + this.url + "'>" + this.text + "</a></p>");
+                if (this.info !== undefined) {
+                    $("#desc" + c).append("<p>" + this.info + "</p>");
+                }
+
+                if (this.text.length > longest_label_len) {
+                    longest_label_len = this.text.length;
+                }
+            } else if (config.data.json !== null && config.data.json[i].text == undefined || config.data.json[i].text == "") {
+                var header = $("#desc" + c).siblings(".desc_header");
+                header.hide();
+            }
+
+        });
+
+        if (longest_label_len > 0) {
+            config.axis.x.height = longest_label_len * label_stretch + label_padding;
+            config.size.height += longest_label_len * label_stretch + label_padding;
+        }
+
+        if (all_charts[c].c3 === true) {
+            var chart = c3.generate(config);
+            c3_charts.push(chart);
+        } else {
+            drawChart(d3.select("#chart" + c), all_charts[c]);
+        }
+        //console.log(config);
+    }
+
+    //console.log(c3_charts);
+
+    d3.selectAll('.c3-axis-x g.tick')
+        .each(function(d,i){
+            var self = d3.select(this);
+            var code = self.html();
+            var text = self.text();
+            var height = 40;
+            var width = 60;
+
+            var parent_id = this.nearestViewportElement.parentElement.id;
+            var n = parseInt(parent_id.substr(5)); //ids always start with "chart"
+            var type = all_charts[n].type;
+
+            if (type == "bar") {
+                //if (text.length > height) {
+                    height = text.length * label_stretch + label_padding;
+                //}
+
+                var insert_pos = code.indexOf("</line>") + "</line>".length;
+                var insert_html = "<switch>" +
+                    "<foreignObject width='" + width + "' height='" + height + "' x='-25' y='5' >" + //requiredExtensions='http://www.w3.org/1999/xhtml'
+                    "<xhtml:p class='legend-x-axis' style='word-wrap: break-word;'>" + text + "</xhtml:p>" +
+                    "</foreignObject>";
+                code = code.slice(0, insert_pos) + insert_html + code.slice(insert_pos) + "</switch>";
+                self.html(code);
+            }
+
+        });
+
+    jQuery(function ($) {
+        $('.legend-x-axis').hyphenate('de');
+    });
+
+    $(c3_charts).each(function() {
+        //console.log(this.element.id);
+       this.internal.config.axis_x_tick_multiline = true;
+       //console.log(this.internal.config);
+    });
+
+    //render a new svg chart in the specified div using the data passed in
+    function drawChart(element, config) {
+        //console.log(config);
+        var data = JSON.parse(config.data);
+
+        //setup dimensions based on size of container element
+        var margin = {top: 10, right: 10, bottom: 10, left: 30},
+            elementWidth = parseInt(element.style("width")),
+            elementHeight = parseInt(element.style("height")),
+            width = config.width,
+            height = config.height;
+
+        var startYear = config.startYear;
+        var endYear = config.endYear;
+
+        var titles = config.label;
+
+        //vertical axis
+        var y = d3.scale.ordinal()
+            .domain(titles)
+            .rangePoints([0, height], 1);
+
+        var yAxis = d3.svg.axis()
+            .orient("left")
+            .scale(y);
+            //.tickValues(titles);
+
+        //linear yearly scale
+        var x = d3.scale.linear()
+            .domain([startYear,endYear])
+            .range([0,width]);
+
+        var ticks = (endYear-startYear)/config.tickLength;
+
+        //horizontal axis
+        var xAxis = d3.svg.axis()
+            .orient("bottom")
+            .ticks(ticks)
+            .tickFormat(d3.format("d"))
+            .scale(x);
+
+        //calculate distance between ticks, for use in drawing the bars on the chart
+        var tickDistance = width/(endYear-startYear);
+
+        var div = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        var yOffset = config.yOffset;
+
+        //create the svg
+        var svg = element.append("svg")
+            .attr("width", width + margin.left + margin.right + yOffset)
+            .attr("height", height + margin.top + margin.bottom);
+
+        //draw the x axis
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(" + yOffset + "," + height + ")")
+            .call(xAxis)
+            //move text to the left of the axis
+            .selectAll("text")
+            .attr("transform", "translate(0,0)");
+
+        //draw the y axis
+        svg.append("g")
+            .attr("class", "y axis")
+            .attr("transform", "translate(" + yOffset + ",0)")
+            .call(yAxis)
+            //move text to the left of the axis
+            .selectAll("text")
+            .call(wrap, yOffset-50)
+            .attr("transform", "translate(0,-10)")
+            .attr("dx", "-1em");
+
+        //draw the bars, offset y and bar height based on data
+        svg.selectAll(".bar")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("class", "bar")
+            //.attr("x", margin.left + 20 + yOffset)
+            .attr("width", function(d) {
+                var offset = d.end - d.start;
+                if (offset < 3) offset = 3;
+                return offset * tickDistance;
+            })
+            .attr("x", function(d) {
+                return x(d.start) + yOffset;
+            })
+            .attr("y", function(d, i) {
+                //return 50*i;
+                return height/titles.length*i;
+            })
+            .attr("height", function(d) {
+                if (titles.length <= 12) {
+                    return 20;
+                } else {
+                    return 13;
+                }
+            })
+            .attr("fill", function(d, i) {
+                if (d.colour !== undefined) {
+                    return d3.rgb(d.colour);
+                } else {
+                    return colors_bars[i];
+                }
+            })
+            .on("mouseover", function(d) {
+                div.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                div.html(d.text + "<br/>" + d.start + " &ndash; " + d.end)
+                    .style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+            })
+            .on("mouseout", function(d) {
+                div.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+    }
+
+    //source: https://bl.ocks.org/mbostock/7555321
+    function wrap(text, width) {
+        text.each(function() {
+            var text = d3.select(this),
+                words = text.text().split(/\s+/).reverse(),
+                word,
+                line = [],
+                lineNumber = 0,
+                lineHeight = 1.1, // ems
+                y = text.attr("y"),
+                dy = parseFloat(text.attr("dy")),
+                tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+            while (word = words.pop()) {
+                line.push(word);
+                tspan.text(line.join(" "));
+                if (tspan.node().getComputedTextLength() > width) {
+                    line.pop();
+                    tspan.text(line.join(" "));
+                    line = [word];
+                    tspan = text.append("tspan").attr("x", -10).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+                }
+            }
+        });
+    }
+
+
+    $(document).ready(function() {
+        $("h2").each(function() {
+            $(this).addClass("headline");
+            var text = this.innerHTML;
+            var link = $(this).siblings("div[id]")[0].id;
+            $("#overview ul").append("<li role='presentation'><a href='#" + link + "'>" + text + "</a></li>");
+        });
+
+        $("div.overlay.standard").hide();
+
+        var nav_width = $("#overview").width() + 50;
+        $("#charts_content").css("left", nav_width + "px");
+
+        $(".desc_header").on("click", function() {
+            $(this).next("div.desc_body").toggle("fast");
+        });
+
+    });
+
+</script>
