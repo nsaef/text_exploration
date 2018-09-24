@@ -1,4 +1,5 @@
 <h4>Bigramme</h4>
+
 <h5>Häufigste</h5>
 {% for bigram in collection.bigrams_frequent %}
     <span class="searchable">{{ bigram }}</span>
@@ -6,8 +7,25 @@
         ,
     {% endif %}
 {% endfor %}
+
 <h5>Pointwise Mutual Information</h5>
 {% for bigram in collection.bigrams_pmi %}
+    <span class="searchable">{{ bigram }}</span>
+    {% if not forloop.last %}
+        ,
+    {% endif %}
+{% endfor %}
+
+<h5>Chi Square</h5>
+{% for bigram in collection.bigrams_chi_square %}
+    <span class="searchable">{{ bigram }}</span>
+    {% if not forloop.last %}
+        ,
+    {% endif %}
+{% endfor %}
+
+<h5>Likelihood Ratio</h5>
+{% for bigram in collection.bigrams_likelihood %}
     <span class="searchable">{{ bigram }}</span>
     {% if not forloop.last %}
         ,
@@ -22,8 +40,25 @@
         ,
     {% endif %}
 {% endfor %}
+
 <h5>Pointwise Mutual Information</h5>
 {% for trigram in collection.trigrams_pmi %}
+    <span class="searchable">{{ trigram }}</span>
+    {% if not forloop.last %}
+        ,
+    {% endif %}
+{% endfor %}
+
+<h5>Chi Square</h5>
+{% for trigram in collection.trigrams_chi_square %}
+    <span class="searchable">{{ trigram }}</span>
+    {% if not forloop.last %}
+        ,
+    {% endif %}
+{% endfor %}
+
+<h5>Likelihood Ratio</h5>
+{% for trigram in collection.trigrams_likelihood %}
     <span class="searchable">{{ trigram }}</span>
     {% if not forloop.last %}
         ,

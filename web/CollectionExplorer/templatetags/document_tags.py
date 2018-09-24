@@ -9,6 +9,7 @@ from CollectionExplorer.tasks import *
 import pickle
 import os
 import networkx as nx
+import numpy as np
 
 register = template.Library()
 
@@ -142,3 +143,29 @@ def create_graph_network(collection=None, document=None):
             }
             result["links"].append(e)
     return result
+
+
+@register.simple_tag
+def get_tf_idf(doc_id):
+    doc = Document.objects.get(pk=doc_id)
+    c_id = str(doc.collection.id)
+    filename = c_id + "_tf-idf_stopwords-included_cs.corpus"
+    filepath = corpora_path + c_id + "/" + filename
+
+    try:
+        vectors = pickle.load(open(filepath, "rb"))
+        features =  pickle.load(open(filepath + ".features", "rb"))
+        idx = pickle.load(open(filepath + ".idx", "rb"))
+    except FileNotFoundError:
+        return "Bitte auf der Hauptseite der Sammlung die Tf-idf-Repräsentation erzeugen. Dann werden an dieser Stelle die spezifischsten Worte angezeigt."
+    pos = idx[doc_id]
+
+    docvec = vectors[pos]
+
+    feature_array = np.array(features)
+    tfidf_sorting = np.argsort(docvec.toarray()).flatten()[::-1]
+
+    n = 30
+    top_n = feature_array[tfidf_sorting][:n]
+
+    return top_n

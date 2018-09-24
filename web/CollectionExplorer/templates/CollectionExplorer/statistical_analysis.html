@@ -9,8 +9,14 @@
     <h1>{{ collection.title }} - Statistische Analyse </h1>
 
     <h3>Häufigste Begriffe</h3>
-    {% get_highest_freq_words collection.id as freq_words %}
+{#    {% get_highest_freq_words collection.id as freq_words %}#}
+{#    {% include "./includes/frequent_words.html" with freq_words=freq_words %}#}
+    {% get_highest_freq_words collection.id 150 as freq_words%}
+    {% include "./includes/word_cloud.html" with data=freq_words %}
+    <button class="btn btn-info" onclick="$('#freq_list').toggle();">Liste anzeigen</button>
+    <div id="freq_list" style="display: none">
     {% include "./includes/frequent_words.html" with freq_words=freq_words %}
+    </div>
 
     <h3>Häufigste N-Gramme</h3>
     {% if collection.ngrams.all|length == 0 %}

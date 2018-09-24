@@ -20,10 +20,29 @@
             stroke-opacity: 0.6;
         }
 
+        .links line:hover {
+            stroke: #ff8a00;
+            stroke-opacity: 0.6;
+        }
+
         .nodes circle {
             stroke: #fff;
             stroke-width: 1.5px;
+            cursor: pointer;
         }
+
+        div.tooltip {
+        position: absolute;
+        text-align: center;
+        width: 120px;
+        {% comment %}height: 28px;{% endcomment %}
+        padding: 2px;
+        font: 12px sans-serif;
+        background: lightsteelblue;
+        border: 0px;
+        border-radius: 8px;
+        pointer-events: none;
+    }
 
     </style>
 
@@ -49,6 +68,10 @@
         console.log(graph);
 
         $(function () {
+            var div = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
             var link = svg.append("g")
                 .attr("class", "links")
                 .selectAll("line")
@@ -56,6 +79,11 @@
                 .enter().append("line")
                 .attr("stroke-width", function (d) {
                     return Math.sqrt(d.value);
+                })
+
+            link.append("title")
+            .text(function (d) {
+                    return d.value;
                 });
 
             var node = svg.append("g")
@@ -67,6 +95,23 @@
                 .attr("fill", function (d) {
                     return color(d.group);
                 })
+                .on("mouseover", function(d) {
+                    div.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    div	.html("<span>" + d.title + "</span>")
+                        .style("left", (d3.event.pageX) + "px")
+                        .style("top", (d3.event.pageY - 28) + "px");
+                    console.log(div);
+                })
+                .on("mouseout", function(d) {
+                    div.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                })
+                .on("click", function(d) {
+                    window.open('/explorer/documents/' + d.id);
+                })
                 .call(d3.drag()
                     .on("start", dragstarted)
                     .on("drag", dragged)
@@ -76,6 +121,7 @@
                 .text(function (d) {
                     return d.title;
                 });
+
 
             simulation
                 .nodes(graph.nodes)

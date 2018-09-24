@@ -7,6 +7,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('', views.IndexView.as_view(), name='index'),
     path("collections/<int:collection_id>/docs/<int:pk>/", views.DocumentDetail.as_view(), name="document_detail"),
+    path("documents/<int:pk>/", views.DocumentDetail.as_view(), name="document_detail_short"),
     path("collections/<int:pk>/statistics", views.collection_statistics, name="collection_statistics"),
     path("collections/<int:pk>/semantics", views.collection_semantics, name="collection_semantics"),
     path("collections/<int:pk>/", views.CollectionDetail.as_view(), name="collection_detail"),

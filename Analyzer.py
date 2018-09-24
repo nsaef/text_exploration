@@ -112,11 +112,13 @@ class Analyzer(object):
 
         results = {}
 
-        # print("Chi square:")
-        # print(finder.nbest(measure.chi_sq, n_best))
-        #
-        # print("Likelihood ratio:")
-        # print(finder.nbest(measure.likelihood_ratio, n_best))
+        print("Chi square:")
+        #print(finder.nbest(measure.chi_sq, n_best))
+        results["chi_square"] = finder.nbest(measure.chi_sq, n_best)
+
+        print("Likelihood ratio:")
+        #print(finder.nbest(measure.likelihood_ratio, n_best))
+        results["likelihood_ratio"] = finder.nbest(measure.likelihood_ratio, n_best)
 
         print("Pointwise mutual information:")
         ngrams_pmi = finder.nbest(measure.pmi, n_best)
@@ -130,11 +132,6 @@ class Analyzer(object):
         #print(ngrams_frequent)
         results["most_frequent"] = ngrams_frequent
         return results
-
-
-
-
-
 
 
 

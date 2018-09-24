@@ -37,7 +37,7 @@ class DocumentDetail(generic.DetailView):
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
-        context['collection'] = Collection.objects.get(pk=self.kwargs.get("collection_id", None))
+        context['collection'] = self.object.collection #Collection.objects.get(pk=self.kwargs.get("collection_id", None))
         context["versions_minhash"] = Version.objects.filter(version_of=self.object.id, similarity_measure="MinHash")
         context["versions_word2vec"] = Version.objects.filter(version_of=self.object.id, similarity_measure="Word2Vec", similarity_score__gte=0.1)
         context["note_form"] = TextForm()
@@ -212,6 +212,7 @@ def analyse_vocabulary(request, pk):
             model = get_doc2vec_model(c)
         else:
             path = settings.BASE_DIR + "/CollectionExplorer" + static("CollectionExplorer/") + "models/model_d2v_200k_with_stopwords.mdl"
+            print(path)
             model = embedder.run(path=path)
 
         if type == "similarity":
@@ -227,7 +228,7 @@ def analyse_vocabulary(request, pk):
             c = request.POST.get("word_c")
 
             if all (word in model.wv.vocab for word in (a, b, c)):
-                result = model.wv.most_similar(positive=[b, c], negative=a, topn=5)
+                result = model.wv.most_similar(positive=[b, c], negative=a, topn=10)
 
         if result is not None:
             res_string = "<ol>"

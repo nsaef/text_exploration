@@ -29,6 +29,10 @@
     {% include "./includes/frequent_words.html" with freq_words=freq_words %}
     </div>
 
+    <h2>Spezifischste Worte in diesem Dokument</h2>
+    {% get_tf_idf document.id as tf_idf %}
+    {{ tf_idf }}
+
      <h2>Namen und Orte</h2>
     {% if document.entities.all|length == 0 %}
         {% get_named_entities document %}
@@ -80,19 +84,6 @@
     </tbody>
 </table>
 
-
-{% comment %}    {% retrieve_version_candidates document as candidates %}
-    <h2>Mögliche Versionen - weitere Kandidaten</h2>
-    <ul>
-    {% for id, data in candidates.items %}
-        <li><a href="{% url 'document_detail' collection.id id %}">{{ data.0.title }}, {{ data.1 }} Ähnlichkeit</a></li>
-    {% empty %}
-        <li>Keine Versions-Kandidaten gefunden.</li>
-    {% endfor %}
-    </ul>{% endcomment %}
-
-
-
     <h2>Ähnliche Dokumente</h2>
     {% if not versions_word2vec %}
         {% get_similar_docs document as versions_word2vec %}
@@ -125,7 +116,7 @@
     </table>
 
     <h2>Volltext</h2>
-{#    <div>{{ document.content | linebreaks }}</div>#}
+    <div>{{ document.content | linebreaks }}</div>
 
 {% endblock content %}
 

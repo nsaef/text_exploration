@@ -74,6 +74,7 @@ def process_collection_async(docs, corpus_path, tokens, sents, raw_frequencies, 
     feature_names = None
     corpus = None
     preprocesser = prep()
+    idx = None
 
     if tokens:
         # print("Tokenizing corpus")
@@ -93,14 +94,18 @@ def process_collection_async(docs, corpus_path, tokens, sents, raw_frequencies, 
 
     elif tf_idf:
         c = [x[1] for x in docs]
+        idx = {x[0]:i for i, x in enumerate(docs)}
         corpus = preprocesser.vectorize_tfidf(c)
-        #feature_names = preprocesser.feature_names_tfidf
+        feature_names = preprocesser.feature_names_tfidf
 
     if corpus is not None:
         pickle.dump(corpus, open(corpus_path, "wb"))
 
     if features_path and feature_names is not None:
         pickle.dump(feature_names, open(features_path, "wb"))
+
+    if idx is not None:
+        pickle.dump(idx, open(corpus_path + ".idx", "wb"))
 
     print("Saved collection at " + corpus_path)
     return True
@@ -124,7 +129,7 @@ def add_docs_to_collection_async(collection_id, file=None, remote=True, path=Non
                 fname = name[name_pos + 1:]
 
                 if name.lower().endswith((".doc", ".rtf", ".eml", ".epub", ".json", ".html", ".htm", ".pptx", ".xlsx", ".xls")):
-                    data = process_textract(zip_file, name, fname)
+                    data = process_textract(name, fname, remote=True, zip=zip_file)
                 else:
                     with zip_file.open(name, 'r') as f:
                         if f.name == main_dir:
@@ -145,11 +150,10 @@ def add_docs_to_collection_async(collection_id, file=None, remote=True, path=Non
                 filepath = path + "/" + filename
                 if os.path.isdir(filepath) is True:
                     continue
-                #if collection.documents.filter(path=filepath).count() > 0:
-                 #   continue
-                with codecs.open(filepath, "rb", encoding="utf-8") as fileobj:
-                    date = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
-                    f = process_uploaded_file(fileobj, filename, filepath, date)
+
+                #use textract for all file formats, as it also reads txt/docx/pdf
+                if not filename.lower().endswith((".jpg", ".jpeg", ".png", ".ps", ".tiff", ".tif")):
+                    f = process_textract(filepath, filename, remote=False, path=filepath)
                     file_data.append(f)
         else:
             print("Path not found. Tried: " + path)
@@ -175,12 +179,13 @@ def process_uploaded_file(fileobj, name, path, date):
         print(name + " is not a supported file format")
     return data
 
-def process_textract(zip, name, fname):
-    dir_path = "/home/nsaef/projects/CollectionExplorer/tmp/"
-    zip.extract(name, path=dir_path)
-    name_pos = name.rfind("/")
-    dname = dir_path + name[:name_pos]
-    path = dir_path + name
+def process_textract(name, fname, remote=True, zip=None, path=None):
+    if remote is True:
+        dir_path = "/home/nsaef/projects/CollectionExplorer/tmp/"
+        zip.extract(name, path=dir_path)
+        name_pos = name.rfind("/")
+        dname = dir_path + name[:name_pos]
+        path = dir_path + name
 
     f = {}
     f["date"] = datetime.datetime.fromtimestamp(os.path.getmtime(path))
@@ -193,16 +198,18 @@ def process_textract(zip, name, fname):
     f["path"] = path
     f["title"] = fname
 
-    os.remove(path)
-    if not os.listdir(dname):
-        os.rmdir(dname)
+    if remote is True:
+        os.remove(path)
+        if not os.listdir(dname):
+            os.rmdir(dname)
     return f
 
 def get_plain_text(fileobj, name, path, date):
     f = {}
     try:
         f["content"] = fileobj.read().decode('utf8')
-    except Exception:
+    except Exception as e:
+        print(e)
         return None
     f["date"] = date
     f["path"] = path
@@ -235,7 +242,8 @@ def get_pdf_content(fileobj, path, title=None):
                 doc_title = page.doc.info[0].get("Title")
             interpreter.process_page(page)
         text = retstr.getvalue()
-    except Exception:
+    except Exception as e:
+        print(e)
         return None
 
     device.close()
@@ -258,7 +266,8 @@ def get_pdf_content(fileobj, path, title=None):
         tz_delta = datetime.timedelta(hours=tz_hour, minutes=tz_minute)
         tz = datetime.timezone(tz_delta)
         d = datetime.datetime(year, month, day, hour, minute, second, tzinfo=tz)
-    except Exception:
+    except Exception as e:
+        print(e)
         d = datetime.datetime.now()
 
     f = {}
@@ -273,11 +282,13 @@ def get_pdf_content(fileobj, path, title=None):
 def get_docx_content(fileobj, path, title=None):
     try:
         fo = BytesIO(fileobj.read())
-    except UnicodeDecodeError:
+    except UnicodeDecodeError as e:
+        print(e)
         return None
     try:
         doc = DocX(fo)
-    except ValueError:
+    except ValueError as e:
+        print(e)
         return None
 
     content = ""

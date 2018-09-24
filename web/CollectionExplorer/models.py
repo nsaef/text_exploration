@@ -48,12 +48,28 @@ class Collection(models.Model):
         return self.ngrams.filter(type="bigram", method="pmi").order_by("-score")
 
     @property
+    def bigrams_chi_square(self):
+        return self.ngrams.filter(type="bigram", method="chi_square").order_by("-score")
+
+    @property
+    def bigrams_likelihood(self):
+        return self.ngrams.filter(type="bigram", method="likelihood_ratio").order_by("-score")
+
+    @property
     def trigrams_frequent(self):
         return self.ngrams.filter(type="trigram", method="most_frequent").order_by("-score")
 
     @property
     def trigrams_pmi(self):
         return self.ngrams.filter(type="trigram", method="pmi").order_by("-score")
+
+    @property
+    def trigrams_chi_square(self):
+        return self.ngrams.filter(type="trigram", method="chi_square").order_by("-score")
+
+    @property
+    def trigrams_likelihood(self):
+        return self.ngrams.filter(type="trigram", method="likelihood_ratio").order_by("-score")
 
 #TODO: Property "interesting"/appraisal status
 class Document(models.Model):
@@ -124,9 +140,13 @@ class Ngram(models.Model):
 
     PMI = "pmi"
     MOST_FREQ = "most_frequent"
+    CHI_SQUARE = "chi_square"
+    LIKELIHOOD = "likelihood_ratio"
     METHOD_CHOICES = (
         (PMI, "Pointwise Mutual Information"),
-        (MOST_FREQ, "Häufigste N-Gramme")
+        (MOST_FREQ, "Häufigste N-Gramme"),
+        (CHI_SQUARE, "Chi Square"),
+        (LIKELIHOOD, "Likelihood Ratio")
     )
 
     type = models.CharField(max_length=10, choices=TYPE_CHOICES)

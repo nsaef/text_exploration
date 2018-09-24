@@ -1,6 +1,7 @@
 from django import template
 from django.conf import settings
 from django.templatetags.static import static
+from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from CollectionExplorer.models import Collection, Entity, Ngram
 from CollectionExplorer.tasks import *
@@ -12,6 +13,7 @@ from Clusterer import Clusterer
 import pickle
 import os
 from time import time
+import statistics
 
 register = template.Library()
 
@@ -50,7 +52,7 @@ def process_collection(collection, raw_frequencies=False, tokens=False, sents=Fa
         features_path = None
         docs = list(collection.documents.values_list("id", "content"))
 
-        if raw_frequencies:
+        if raw_frequencies or tf_idf:
             features_path = folder_path + "/" + name + ".features"
 
         process_collection_async.delay(docs, path, tokens, sents, raw_frequencies, tf_idf, remove_stopwords, cs, features_path=features_path) #
@@ -81,12 +83,19 @@ def get_filename(id, tokens, sents, tf_idf, cs, remove_stopwords, raw_frequencie
 
 
 @register.simple_tag
-def get_highest_freq_words(id, n=50):
+def get_highest_freq_words(id, n=500, calc_m=True):
     name = str(id) + "_tokens_stopwords-excluded_cs.corpus"
     corpus_tokenized =  pickle.load(open(corpora_path + str(id) + "/" + name, "rb"))
 
     analyzer = Analyzer()
-    return analyzer.get_frequencies(corpus_tokenized, n)
+    freqs = analyzer.get_frequencies(corpus_tokenized, n)
+
+    # if calc_m is True:
+    #     m = int(len(freqs)/2)
+    # elif n is None:
+    #     m = len(freqs)
+    # return dict(freqs[:m])
+    return dict(freqs)
 
 
 @register.simple_tag
@@ -116,7 +125,7 @@ def find_ngrams(collection, bigrams=True, trigrams=True):
     id = str(collection.id)
     corpus_path = corpora_path + id + "/" + id + "_tokens_stopwords-excluded_cs.corpus"
 
-    get_ngrams_async.delay(collection.id, corpus_path, bigrams, trigrams)
+    get_ngrams_async.delay(collection.id, corpus_path, bigrams, trigrams) #.delay
     return
 
 
@@ -179,7 +188,7 @@ def get_clusters(collection_id, corpus=None, doc2vec=False, tf_idf=False, k=30):
 
     return clusters
 
-
+@register.simple_tag
 def find_versions(id):
     c_id = str(id)
     name = c_id + "_tokens_stopwords-included_cs.corpus"
@@ -190,3 +199,55 @@ def find_versions(id):
     find_versions_async.delay(corpus_tokenized, save_path)
 
     return
+
+
+@register.simple_tag
+def analyze_collection(id):
+    c = Collection.objects.get(pk=id)
+
+    #anzahl dateien insgesamt
+    num_docs = c.documents.count()
+
+    #gruppiert nach typ: doc/docx/txt, pdf, xlsx/xls, html/htm, epub, json, pptx
+    text = c.documents.filter(Q(title__iendswith=".txt") | Q(title__iendswith=".doc") | Q(title__iendswith=".docx")).count()
+    pub = c.documents.filter(Q(title__iendswith=".pdf") | Q(title__iendswith=".epub")).count()
+    table = c.documents.filter(Q(title__iendswith=".xls") | Q(title__iendswith=".xlsx")).count()
+    web = c.documents.filter(Q(title__iendswith=".htm") | Q(title__iendswith=".html")).count()
+    pres = c.documents.filter(title__iendswith=".pptx").count()
+    data = c.documents.filter(title__iendswith=".json").count()
+
+    #dokumentlänge: durchschnitt und median?
+    docs = list(c.documents.all().values("content"))
+    doc_len = [len(x["content"]) for x in docs]
+
+    mean = statistics.mean(doc_len)
+    median = statistics.median_grouped(doc_len)
+
+    result = "<ul>"
+
+    if num_docs > 0:
+        result  += "<li>Gesamtzahl Dokumente: " + str(num_docs) + "</li>"
+
+    if text > 0:
+        result += "<li>Textdokumente (DOC, DOCX, TXT): " + str(text) + "</li>"
+
+    if pub > 0:
+        result += "<li>Publikationen (PDF/EPUB): " + str(pub) + "</li>"
+
+    if pres > 0:
+        result += "<li>Präsentationen (PPTX): " + str(pres) + "</li>"
+
+    if web > 0:
+        result += "<li>Webdokumente (HTML, HTM): " + str(web) + "</li>"
+
+    if table > 0:
+        result += "<li>Tabellen (XLS, XLSX): " + str(table) + "</li>"
+
+    if data > 0:
+        result += "<li>Daten (JSON): " + str(data) + "</li>"
+    result += "<li>Durchschnittliche Dokumentlänge: " + str(mean) + "</li>"
+    result += "<li>Median (50th percentile): " + str(median) + "</li>"
+
+    result += "</ul>"
+
+    return result

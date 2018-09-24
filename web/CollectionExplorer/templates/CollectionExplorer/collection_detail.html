@@ -6,6 +6,13 @@
 
 {% block content %}
     <h1>{{ collection.title }}</h1>
+
+    <h2>Info</h2>
+    <p>Zusammensetzung der Sammlung:<br/>
+    {% analyze_collection collection.id as info %}
+    {{ info|safe }}
+    </p>
+
     <h2>Aktionen</h2>
     <!-- Werte jeweils in einen deaktivierten Input schreiben. Mit Klick auf Button wird input aktiviert. Muss in form sein, welches Daten per post schickt und so db ändert -->
         <p>Name: {{ collection.title }} <!--<button>umbenennen</button>--></p>
@@ -22,6 +29,7 @@
     <p><a href="{% url 'collection_statistics' collection.id %}">Statistische Analyse</a>: Häufigste Wörter, N-Gramme, Named Entities</p>
     <p><a href="{% url 'collection_semantics' collection.id %}">Semantische Analyse</a>: Topic Models, Dokument-Cluster</p>
     <p><a href="{% url 'analyse_vocabulary' collection.id %}">Vokabular analysieren</a></p>
+    <p><a href="{% url 'network' collection.id %}">Netzwerkansicht</a> </p>
     <h3>Voraussetzungen/Ressourcen</h3>
     <table class="table table-striped">
         <thead>

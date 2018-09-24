@@ -42,7 +42,7 @@
                 <h6>Begriffe</h6>
                 {{ topic.desc }}
                 <h6>Dokumente</h6>
-                    {% include "./large_doc_list.html" with docs=topic.docs %}
+                    {% include "./includes/large_doc_list.html" with docs=topic.docs %}
             {% endfor %}
         {% endif %}
 
