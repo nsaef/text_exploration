@@ -6,7 +6,7 @@ from celery import Celery
 # https://github.com/celery/celery/issues/3377
 
 #to instantiate the worker, see https://github.com/celery/celery/issues/4178
-# celery -A mysite.celery worker --pool=eventlet --loglevel=INFO -f celery.log
+# celery -A mysite.celery worker --loglevel=INFO -f celery.log
 
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')

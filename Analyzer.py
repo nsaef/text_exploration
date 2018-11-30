@@ -13,8 +13,9 @@ from nltk.corpus import stopwords
 class Analyzer(object):
     def __init__(self):
         self.word_frequencies = None
-        self.named_entities = None
+        self.named_entities = []
         self.stopwords = nltk.corpus.stopwords.words('german')
+        self.stopwords.extend(nltk.corpus.stopwords.words('english'))
         self.stopwords.extend(
             ["==", "===", "====", "s.", "dass", "the", "of", "de", "wurde", "**", "ab", "sowie", "etwa", "i.", '"',
              "...", "…", '“', '”', "'", "=", "»", "«", "'“'", "'„'", "'...'"])
@@ -39,7 +40,8 @@ class Analyzer(object):
         german_model = dir_path + r"/resources/german.conll.hgc_175m_600.crf.ser.gz"
         #print(ner_tagger_path)
         tagger = StanfordNERTagger(german_model, ner_tagger_path, encoding="UTF-8")  # iso-8859-15
-        tagger.java_options = '-mx4096m'
+        tagger.java_options = '-mx2048 -Xmx2048m -Xms2048m'
+        nltk.internals.config_java(options='-xmx2G')
 
         print("Running named entity recognition on sentences")
         t0 = time()
@@ -57,7 +59,8 @@ class Analyzer(object):
         t0 = time()
 
         entities = []
-        for tag, chunk in groupby(self.named_entities, lambda x: x[1]):
+        entities_grouped = groupby(self.named_entities, lambda x: x[1])
+        for tag, chunk in entities_grouped:
             if tag != "O":
                 chunk = tuple((" ".join(w for w, t in chunk), tag))
                 if "," in chunk[0]:
@@ -80,7 +83,8 @@ class Analyzer(object):
         print("done in %0.3fs" % (time() - t0))
         return self.named_entities
 
-    def find_ngrams(self, tokenized_corpus, bigrams=True, trigrams=True, min_frequency=20, n_best=20):
+
+    def find_ngrams(self, tokenized_corpus, bigrams=True, trigrams=True, min_frequency=100, n_best=20):
         print("Finding ngrams...")
 
         all_docs = list(itertools.chain.from_iterable(tokenized_corpus.values()))

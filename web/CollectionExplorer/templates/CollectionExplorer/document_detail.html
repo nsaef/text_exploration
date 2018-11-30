@@ -29,9 +29,9 @@
     {% include "./includes/frequent_words.html" with freq_words=freq_words %}
     </div>
 
-    <h2>Spezifischste Worte in diesem Dokument</h2>
+    {%comment%}<h2>Spezifischste Worte in diesem Dokument</h2>
     {% get_tf_idf document.id as tf_idf %}
-    {{ tf_idf }}
+    {{ tf_idf }}{%endcomment%}}
 
      <h2>Namen und Orte</h2>
     {% if document.entities.all|length == 0 %}

@@ -43,11 +43,12 @@ class SearchEngine(object):
         #     print(hit.highlights("content"))
         return results
 
-    def build_index(self, file_dir=None, files=None):
+    def build_index(self, file_dir=None, files=None, create_ix=True):
         print("Creating a new index...")
         t0 = time()
 
-        self.ix = index.create_in(self.index_dir, schema=self.schema)
+        if create_ix is True:
+            self.ix = index.create_in(self.index_dir, schema=self.schema)
         self.writer = self.ix.writer(limitmb=2048) #, procs=2, multisegment=True #check: AsyncWriter, BufferedWriter
 
         if file_dir is not None and os.path.exists(file_dir):

@@ -25,7 +25,7 @@ SECRET_KEY = 'a#bc276v@s+qbu&+1x5_h02fo!@ov_rs73)+kahllipdhhxc%9'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["sandbox.hki.uni-koeln.de", "134.95.80.220"]
+ALLOWED_HOSTS = ["sandbox.hki.uni-koeln.de", "134.95.80.220", "141.90.202.208"]
 
 
 # Application definition
@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_celery_results',
     'psycopg2',
-    'django_extensions'
 ]
 
 MIDDLEWARE = [
@@ -99,8 +98,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'text_exploration',
-        'USER': 'nsaef',
-        'PASSWORD': 'dPSQL-PWins,uiweäm,af1re', #password
+        'USER': 'admin',
+        'PASSWORD': 'password', #password
         'HOST': '127.0.0.1', #'sandbox.hki.uni-koeln.de',
         'PORT': '5432',
     }

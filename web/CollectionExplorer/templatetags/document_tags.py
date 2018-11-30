@@ -4,6 +4,7 @@ from django.templatetags.static import static
 from Preprocesser import Preprocesser
 from DocEmbedder import DocEmbedder
 from Analyzer import Analyzer
+from Serializer import Serializer
 from CollectionExplorer.models import Document, Version
 from CollectionExplorer.tasks import *
 import pickle
@@ -36,7 +37,7 @@ def get_highest_freq_words(doc, n=None, calc_n=True):
 
 @register.simple_tag
 def get_named_entities(doc):
-    get_named_entities_async.delay(type="document", id=doc.id)
+    get_named_entities_async.delay(type="document", id=doc.id) #.delay
     return
 
 
@@ -46,7 +47,13 @@ def get_similar_docs(doc, n=50):
     collection_id = str(doc.collection.id)
     model_file = model_path + collection_id + ".model"
     corpus_path = corpora_path + collection_id + "/" + collection_id + "_tokens_stopwords-included_cs.corpus"
-    corpus = pickle.load(open(corpus_path, "rb"))
+
+    try:
+        serializer = Serializer()
+        corpus = serializer.load(corpus_path)
+    except FileNotFoundError as e:
+        print("Korpus 3 (tokenisiert, mit Stoppwörtern) nicht vorhanden.")
+        return []
 
     embedder = DocEmbedder()
     model = embedder.run(path=model_file)
@@ -74,7 +81,8 @@ def retrieve_version_candidates(doc):
     candidates = {}
 
     if os.path.isfile(corpus_path):
-        corpus = pickle.load(open(corpus_path, "rb"))
+        serializer = Serializer()
+        corpus = serializer.load(corpus_path)
 
         for c_id, score in corpus.items():
             #score = hash.jaccard(c_id)
@@ -153,9 +161,10 @@ def get_tf_idf(doc_id):
     filepath = corpora_path + c_id + "/" + filename
 
     try:
-        vectors = pickle.load(open(filepath, "rb"))
-        features =  pickle.load(open(filepath + ".features", "rb"))
-        idx = pickle.load(open(filepath + ".idx", "rb"))
+        serializer = Serializer()
+        vectors = serializer.load(filepath)
+        features =  serializer.load(filepath + ".features")
+        idx = serializer.load(filepath + ".idx")
     except FileNotFoundError:
         return "Bitte auf der Hauptseite der Sammlung die Tf-idf-Repräsentation erzeugen. Dann werden an dieser Stelle die spezifischsten Worte angezeigt."
     pos = idx[doc_id]

@@ -42,18 +42,27 @@ class Clusterer(object):
 
 
     def kmeans_console_output(self, wv_index):
+        print("Creating doc centroid map...")
         doc_centroid_map = dict(zip(wv_index, self.kmeans_result))
-        result = {}
+        #result = {}
 
-        for cluster in range(0, self.k):
-            # Find all of the words for that cluster number, and print them out
-            docs = []
+        print("Assigning docs to clusters...")
+        result = {i:list() for i in range(0, self.k)}
+        for i in range(0, len(doc_centroid_map.values())):
+            c = list(doc_centroid_map.values())[i]
+            result[c].append(list(doc_centroid_map.keys())[i])
 
-            for i in range(0, len(doc_centroid_map.values())):
-                c = list(doc_centroid_map.values())[i]
-                if c == cluster:
-                    docs.append(list(doc_centroid_map.keys())[i])
-            result[cluster] = docs
+        # for cluster in range(0, self.k):
+        #     print("Cluster " + str(n) + " of " + str(self.k))
+        #     # Find all of the words for that cluster number, and print them out
+        #     #docs = []
+        #
+        #     for i in range(0, len(doc_centroid_map.values())):
+        #         c = list(doc_centroid_map.values())[i]
+        #
+        #         #if c == cluster:
+        #         #    docs.append(list(doc_centroid_map.keys())[i])
+        #     result[cluster] = docs
         return result
 
 
@@ -175,11 +184,6 @@ class Clusterer(object):
 
         agglo = FeatureAgglomeration(n_clusters=n, affinity="cosine", linkage="complete")
         return agglo.fit_transform(data)
-
-
-
-
-
 
 
     # def cluster_dbscan(self, vectors):

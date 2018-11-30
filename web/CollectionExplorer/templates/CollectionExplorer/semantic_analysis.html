@@ -6,7 +6,9 @@
 
 {% block content %}
     <h1>Semantische Analysen der Sammlung {{ collection.title }}</h1>
-    <p>Erklärtext über Clustering, die Datengrundlage und Topic Modelling. Je größer die Sammlung, desto mehr Cluster. Sollten gesuchten/gwünschten Gruppen entsprechen. Wenn ahnungslos: ausprobieren. Achtung: Wartezeit!</p>
+    <p>Hier können die im Korpus enthaltenene Dokumente automatisch in Gruppen eingeteilt werden. Dafür stehen drei Methoden zur Verfügung: Doc2Vec-Cluster, Topic Modelling, und Tf-idf-Cluster. Alle drei Methoden haben gemeinsam, dass die gewünschte Zahl der Gruppen vom Bearbeiter ausgewählt werden muss. Dafür gibt es keine Faustregel; die optimale Zahl der Cluster hängt davon ab, wie groß das Korpus ist und wie viele Themen darin behandelt werden. Sie muss über Trial-and-Error ermittelt werden. Außerdem sind alle Methoden nicht-deterministisch, sie liefern also bei verschiedenen Durchläufen unterschiedliche Ergebnisse.</p>
+    <p>Doc2Vec funktioniert vor allem bei sehr großen Korpora (z.B. 100.000 Wikipedia-Artikel). Topic Modelling und Tf-idf-Cluster dagegen sind auch schon bei kleineren Sammlungen einsetzbar (z.B. ca. 5.000 Textdokumente), profitieren aber auch von mehr Daten. Beim Topic Modelling werden die für das Topic relevantesten Tokens ausgegeben, um einen Eindruck vom Topic zu vermittln. Die übrigen Cluster müssen ohne solche Hilfsmittel ausgewertet werden.</p>
+    <p>Es kann beim Durchführen der Analyse zu hohen Wartezeiten kommen.</p>
     <form action="#" method="get">
         <div class="form-group">
             <label for="n_clusters">Zahl der zu bildenden Cluster/Topics</label>
@@ -47,6 +49,7 @@
         {% endif %}
 
         {% if tf_idf is not False %}
+            <h4>Tf-idf-Cluster</h4>
             {% get_clusters collection.id tf_idf=True k=n_clusters as clusters %}
             {% include "./includes/semantic_clusters.html" with clusters=clusters %}
         {% endif %}

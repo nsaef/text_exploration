@@ -142,7 +142,7 @@ def add_collection(request):
     c.path = request.POST["col_path"]
     c.save()
     #add_docs_to_collection_async.delay(c.id)
-    return HttpResponseRedirect(reverse("upload_docs", kwargs={"pk": c.id}))
+    return HttpResponseRedirect(reverse("upload_files", kwargs={"pk": c.id}))
 
 
 def add_docs_to_collection(request, pk):
@@ -168,7 +168,7 @@ def create_file(request, pk):
     if model:
         get_doc2vec_model(c, recreate=True)
     elif fulltext:
-        instantiate_ft_search(c, index_path, recreate=True) #.delay
+        instantiate_ft_search.delay(c, index_path, recreate=True) #.delay
     else:
         process_collection(c, raw_frequencies=raw_frequencies, tokens=tokens, sents=sents, tf_idf=tf_idf, cs=cs,
                            remove_stopwords=remove_stopwords, async=True)
@@ -247,3 +247,9 @@ def analyse_vocabulary(request, pk):
 def network(request, pk):
     collection = Collection.objects.get(pk=pk)
     return render(request, "CollectionExplorer/network.html", {"pk": pk, "collection": collection})
+
+
+def delete_content(request, pk):
+    c = Collection.objects.get(pk=pk)
+    c.documents.all().delete()
+    return HttpResponseRedirect(reverse("collection_detail", kwargs={"pk": c.id}))

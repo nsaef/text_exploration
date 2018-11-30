@@ -5,6 +5,7 @@ from nltk.corpus import stopwords
 from nltk.tag import StanfordNERTagger
 import nltk.data
 import string
+import re
 
 
 class Preprocesser(object):
@@ -17,7 +18,22 @@ class Preprocesser(object):
         self.corpus_sentences = []
 
         self.stopwords = nltk.corpus.stopwords.words('german')
+        self.stopwords.extend(nltk.corpus.stopwords.words('english'))
         self.stopwords.extend(["==", "===", "====", "s.", "dass", "the", "of", "de", "wurde", "**", "ab", "sowie", "etwa", "i.", '"', "...", "…", '“', '”', "'", "=", "»", "«"])
+
+    def clean_corpus(self, corpus, pattern):
+        print("Cleaning up the text...")
+        #prog = re.compile(pattern)
+
+        t0 = time()
+
+        corpus = [(id, article) for id, article in corpus if article]
+
+        for i, (id, article) in enumerate(corpus):
+            cleaned = re.sub(pattern, "---", article)
+            corpus[i] = (id, cleaned)
+        print("done in %0.3fs" % (time() - t0))
+        return corpus
 
     def tokenize(self, corpus, remove_stopwords=True, cs=True):
         # NLTK's default German stopwords
@@ -25,12 +41,12 @@ class Preprocesser(object):
 
         print("running tokenize...")
         t0 = time()
+        sent_tokenizer = nltk.data.load("tokenizers/punkt/german.pickle")
 
         for id, article in corpus:
             article_list = []
-            sent_tokenizer = nltk.data.load("tokenizers/punkt/german.pickle")
-
-            for sentence in sent_tokenizer.tokenize(article):
+            sents = sent_tokenizer.tokenize(article)
+            for sentence in sents:
                 for token in nltk.tokenize.word_tokenize(sentence):
                     if token not in string.punctuation and (remove_stopwords is False or token.lower() not in self.stopwords):
                         if cs is True:

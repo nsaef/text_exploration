@@ -22,6 +22,7 @@
 {#            <p><input type="submit" class="btn btn-default" value="Dokumente neu einlesen"></p>#}
 {#        </form>#}
     <button class="btn btn-info"><a href="{% url 'upload_files' collection.id %}">Weitere Dokumente hochladen</a></button>
+    <button class="btn btn-warning"><a href="{% url 'delete_content' collection.id %}">Alle Dokumente löschen</a></button>
 
     <h2>Überblick</h2>
     <!-- Status der nötigen Dateien/Named Entities etc + buttons zum erzeugen -->
@@ -90,7 +91,7 @@
             <tr>
                 <td>Tf-IdF-Vektor-Repräsentation</td>
                 <td>Cluster</td>
-                <td>Korpus 3???</td>
+                <td>Korpus 3</td>
                 <td>{% check_corpus_status collection.id "corpora" "tf-idf_stopwords-included_cs" %}</td>
                 <td>
                     <form action="{% url 'create_file' collection.id %}" method="post">{% csrf_token %}
@@ -127,7 +128,7 @@
     </table>
 
     <h3>Duplikate und Versionen finden</h3>
-    <p>Erläuternder Text, der über Unsicherheit von Versionen aufklärt</p>
+    <p>Die Erkennung von Duplikaten und Versionen geschicht durch den Abgleich der Wörter aller Dokumente. Stimmen sie vollständig überein, so handelt es sich um Duplikate voneinander. Es wird standardmäßig nur ein Exemplar des doppelt vorhandenen Dokuments in der unten stehenden Übersicht angezeigt. Die Identifikation von Versionen ist weniger eindeutig. Wird ein bestimmter Grenzwert an Übereinstimmung überschritten, so wird ein Dokument als Versionskandidat vorgeschlagen; das heißt aber nicht zwingend, dass es sich tatsächlich um Versionen des gleichen Texts handelt.<br/>Da für die Versionserkennung alle Dokumente miteinander vergleichen werden müssen, handelt es sich (insbesondere bei großen Sammlungen) um eine langwierige Operation. Sie können die Webseite in der Zwischenzeit normal weiter benutzen.</p>
     <a class="btn btn-info" role="button" href="{% url 'find_versions' collection.id %}">Versionen finden</a>
 
 
@@ -138,7 +139,7 @@
     <button class="btn btn-info" onclick="filter_table(3, 'None')">Nur nicht bewertete Dokumente</button>
     <button class="btn btn-default" onclick="filter_table(4, 0)">Zurücksetzen</button>
 
-    {% include "./includes/doc_table.html" with docs=collection.documents.all %} <!--collection.documents.all-->
+    {% include "./includes/doc_table.html" with docs=collection.documents.all %}
 
 {% endblock content %}
 

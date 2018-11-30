@@ -1,7 +1,9 @@
 from django.db import models
+from django.db.models import Q
 import os, os.path
 import datetime
 import codecs
+
 
 # Create your models here.
 def create_upload_filename(self):
@@ -34,7 +36,9 @@ class Collection(models.Model):
     @property
     def most_frequent_entities(self, type=None):
         if not type:
-            results = self.entities.order_by("type", "-frequency")[0:10000]
+            qs = self.entities.order_by("-frequency")[0:10000]
+            results = sorted(qs, key=lambda x: x.type)
+            #results = self.entities.filter(Q(type="person")|Q(type="organization")|Q(type="location")|Q(type="other")).order_by("-frequency")[0:10000]
         else:
             results = self.entities.filter(type=type).order_by("-frequency")[0:10000]
         return results
@@ -80,7 +84,7 @@ class Document(models.Model):
     collection = models.ForeignKey(Collection, related_name='documents', on_delete=models.CASCADE)
     duplicates = models.ManyToManyField("self")
     version_candidates = models.ManyToManyField("self", through="Version", symmetrical=False)
-    interesting = models.BooleanField(blank=True, null=True)
+    interesting = models.NullBooleanField(blank=True, null=True)
     note = models.TextField(default="")
 
     class Meta:
@@ -98,8 +102,8 @@ class Document(models.Model):
         return results
 
 class Version(models.Model):
-    candidate = models.ForeignKey(Document, related_name="original", on_delete=models.PROTECT)
-    version_of = models.ForeignKey(Document, related_name="version", on_delete=models.PROTECT)
+    candidate = models.ForeignKey(Document, related_name="original", on_delete=models.CASCADE)
+    version_of = models.ForeignKey(Document, related_name="version", on_delete=models.CASCADE)
     similarity_measure = models.CharField(max_length=100, blank=True, null=True)
     similarity_score = models.DecimalField(max_digits=3, decimal_places=2)
 

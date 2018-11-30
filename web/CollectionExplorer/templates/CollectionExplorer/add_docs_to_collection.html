@@ -4,7 +4,7 @@
 
 {% block content %}
     <h1>Dokumente hochladen</h1>
-    <p>Hier können neue Dokumente in Form einer Zip-Datei der Sammlung hinzugefügt werden. Der Upload-Vorgang nimmt besonders bei einer hohen Zahl von Dokumenten viel Zeit in Anspruch. Nach Abschluss des Uploads werden Sie zur Sammlung weitergeleitet. Die maximal zulässige Dateigröße beträgt ??? MB. Es können die Formate ??????? verarbeitet werden.</p>
+    <p>Hier können neue Dokumente der Sammlung hinzugefügt werden. Sofern Dateien aus dem lokalen Dateisystem hochgeladen werden, müssen sie in einer Zip-Datei zusammengefasst und als eine Datei hochgeladen werden. Dateien vom Server können direkt ausgelesen werden. Es können die Formate TXT, DOC, DOCX, PDF, HTM, HTML, PPTX, CSV, XLS und XLSX verarbeitet werden.</p><p>Der Upload-Vorgang nimmt besonders bei einer hohen Zahl von Dokumenten viel Zeit in Anspruch. Sobald er abgeschlossen ist, werden Sie zur Sammlung weitergeleitet.</p>
 
     <form action="#" method="post" enctype="multipart/form-data">
         {% csrf_token %}

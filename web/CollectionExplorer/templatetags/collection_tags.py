@@ -10,10 +10,12 @@ from Analyzer import Analyzer
 #from DocEmbedder import DocEmbedder
 from TopicModeller import TopicModeller
 from Clusterer import Clusterer
+from Serializer import Serializer
 import pickle
 import os
 from time import time
 import statistics
+import random
 
 register = template.Library()
 
@@ -44,18 +46,19 @@ def process_collection(collection, raw_frequencies=False, tokens=False, sents=Fa
         os.mkdir(folder_path)
 
     if os.path.exists(folder_path + "/" + name) and async is False:
-        corpus = pickle.load(open(folder_path + "/" + name, "rb"))
+        serializer = Serializer()
+        corpus = serializer.load(folder_path + "/" + name)
 
     else:
         corpus = None
         path = folder_path + "/" + name
         features_path = None
-        docs = list(collection.documents.values_list("id", "content"))
+        #docs = list(collection.documents.values_list("id", "content"))
 
         if raw_frequencies or tf_idf:
             features_path = folder_path + "/" + name + ".features"
 
-        process_collection_async.delay(docs, path, tokens, sents, raw_frequencies, tf_idf, remove_stopwords, cs, features_path=features_path) #
+        process_collection_async.delay(collection.id, path, tokens, sents, raw_frequencies, tf_idf, remove_stopwords, cs, features_path=features_path) #.delay
     return corpus
 
 
@@ -84,8 +87,9 @@ def get_filename(id, tokens, sents, tf_idf, cs, remove_stopwords, raw_frequencie
 
 @register.simple_tag
 def get_highest_freq_words(id, n=500, calc_m=True):
+    serializer = Serializer()
     name = str(id) + "_tokens_stopwords-excluded_cs.corpus"
-    corpus_tokenized =  pickle.load(open(corpora_path + str(id) + "/" + name, "rb"))
+    corpus_tokenized =  serializer.load(corpora_path + str(id) + "/" + name)
 
     analyzer = Analyzer()
     freqs = analyzer.get_frequencies(corpus_tokenized, n)
@@ -100,7 +104,7 @@ def get_highest_freq_words(id, n=500, calc_m=True):
 
 @register.simple_tag
 def get_named_entities(id, n=20):
-    get_named_entities_async.delay("collection", id, corpora_path)
+    get_named_entities_async.delay("collection", id, corpora_path) #.delay
     return
 
 
@@ -116,7 +120,7 @@ def get_doc2vec_model(collection, recreate=False):
         for f in del_list:
             os.remove(model_path + f)
         print("removed old model")
-    return get_doc2vec_model_async.delay(model_path, str(collection.id), corpora_path)
+    return get_doc2vec_model_async.delay(model_path, str(collection.id), corpora_path) #.delay
     #return model
 
 
@@ -135,8 +139,9 @@ def create_topic_models(collection, n_topics=30):
     corpus_path = corpora_path + id + "/" + id + "_rf_stopwords-included_cs.corpus"
     feature_path =corpus_path + ".features"
 
-    corpus_rf = pickle.load(open(corpus_path, "rb"))
-    feature_names = pickle.load(open(feature_path, "rb"))
+    serializer = Serializer()
+    corpus_rf = serializer.load(corpus_path, type="csr_matrix")
+    feature_names = serializer.load(feature_path, type="list")
     #corpus = list(collection.documents.values_list("content", flat=True))
     docs = list(collection.documents.values_list("id", flat=True))
 
@@ -161,30 +166,42 @@ def create_topic_models(collection, n_topics=30):
 @register.simple_tag
 def get_clusters(collection_id, corpus=None, doc2vec=False, tf_idf=False, k=30):
     collection = Collection.objects.get(pk=collection_id)
-    features = None
-    vectors = features = list(collection.documents.values_list("id", flat=True))
+    #features = None
+    vectors = None
+    features = list(collection.documents.values_list("id", flat=True))
 
     if doc2vec is True:
         #features = list(collection.documents.values_list("id", flat=True))
         vectors = corpus.wv.vectors
 
     elif tf_idf is True:
+        serializer = Serializer()
         c_id = str(collection_id)
         v_path = corpora_path + c_id + "/" + c_id + "_tf-idf_stopwords-included_cs.corpus"
-        vectors = pickle.load(open(v_path, "rb"))
-        #features = pickle.load(open(v_path + ".features", "rb"))
+        vectors = serializer.load(v_path, type="csr_matrix")
+        #features = serializer.load(v_path + ".features")
 
     clusterer = Clusterer(k=k)
     clusters_kmeans = clusterer.cluster_kmeans(vectors, file_output=False, console_output=True,
     reduced_vectors=None, feature_names=features)
 
+    print("Sorting docs by cluster")
     clusters = {}
+    limit = 5000
 
     for key, doc_ids in clusters_kmeans.items():
         clusters[key] = []
+        random.shuffle(doc_ids)
 
-        for id in doc_ids:
+        for id in doc_ids[:limit]:
             clusters[key].append(collection.documents.get(pk=id))
+
+    # if collection.documents.count() > 15000:
+    #     print("Creating excerpts from clusters...")
+    #     for i, cluster in clusters:
+    #         if len(cluster) > limit:
+    #             random.shuffle(cluster)
+    #             clusters[i] = cluster[:limit]
 
     return clusters
 
@@ -192,11 +209,18 @@ def get_clusters(collection_id, corpus=None, doc2vec=False, tf_idf=False, k=30):
 def find_versions(id):
     c_id = str(id)
     name = c_id + "_tokens_stopwords-included_cs.corpus"
-    corpus_tokenized = pickle.load(open(corpora_path + c_id + "/" + name, "rb"))
+    path = corpora_path + c_id + "/" + name
+    #corpus_tokenized = pickle.load(open(corpora_path + c_id + "/" + name, "rb"))
+    #corpus_tokenized = joblib.load(corpora_path + c_id + "/" + name)
+
+    serializer = Serializer()
+    corpus_tokenized = serializer.load(path)
+
     #save_path = corpora_path + c_id + "/" + c_id + "_similarities.corpus"
     save_path = static_path + "similarities/"
 
-    find_versions_async.delay(corpus_tokenized, save_path)
+    find_versions_async.delay(corpus_tokenized, save_path) #
+    #make_versions_from_similarities(id)
 
     return
 
@@ -207,6 +231,9 @@ def analyze_collection(id):
 
     #anzahl dateien insgesamt
     num_docs = c.documents.count()
+
+    if num_docs == 0:
+        return "<p>Keine Dokumente in der Sammlung</p>"
 
     #gruppiert nach typ: doc/docx/txt, pdf, xlsx/xls, html/htm, epub, json, pptx
     text = c.documents.filter(Q(title__iendswith=".txt") | Q(title__iendswith=".doc") | Q(title__iendswith=".docx")).count()
@@ -221,7 +248,7 @@ def analyze_collection(id):
     doc_len = [len(x["content"]) for x in docs]
 
     mean = statistics.mean(doc_len)
-    median = statistics.median_grouped(doc_len)
+    median = statistics.median(doc_len)
 
     result = "<ul>"
 
@@ -245,9 +272,10 @@ def analyze_collection(id):
 
     if data > 0:
         result += "<li>Daten (JSON): " + str(data) + "</li>"
-    result += "<li>Durchschnittliche Dokumentlänge: " + str(mean) + "</li>"
-    result += "<li>Median (50th percentile): " + str(median) + "</li>"
+    result += "<li>Durchschnittliche Dokumentlänge: " + str(mean) + " Zeichen inkl. Leerzeichen</li>"
+    result += "<li>Median (50th percentile): " + str(median) + " Zeichen inkl. Leerzeichen</li>"
 
     result += "</ul>"
 
     return result
+

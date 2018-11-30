@@ -20,7 +20,8 @@ urlpatterns = [
     path("edit_favorite/<int:pk>/", views.edit_favorite, name="edit_favorite"),
     path("save_note/<int:pk>/", views.save_note, name="save_note"),
     path("vocabulary/<int:pk>/", views.analyse_vocabulary, name="analyse_vocabulary"),
-    path("network/<int:pk>/", views.network, name="network")
+    path("network/<int:pk>/", views.network, name="network"),
+    path("delete_docs/<int:pk>/", views.delete_content, name="delete_content")
 ]
 
 if settings.DEBUG is True:

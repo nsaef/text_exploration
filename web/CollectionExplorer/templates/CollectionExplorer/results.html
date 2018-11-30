@@ -9,6 +9,7 @@
     {% ft_search collection query as results %}
 
     <h1>Suchergebnis</h1>
+    <p>Es können ein oder mehrere Suchbegriffe eingegeben werden. Die Operatoren AND und OR stehen zur Verfügung; standardmäßig werden Suchebgriffe mit AND verknüpft. Es werden die Volltexte der Dokumente durchsucht.</p>
     <p>Ergebnisse für die Suche nach "{{ query }}" in der Sammlung <a href="{% url 'collection_detail' collection.id %}">{{ collection.title }}</a></p>
 
     {% get_similar_words query collection.id as words %}
